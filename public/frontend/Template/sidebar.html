@@ -1,0 +1,12 @@
+<div class="sidebar">
+  <div class="sidebar-nav">
+    <a href="dashboard.html">Inicio</a>
+    <a href="users.html" x-show="role === 'coordinador'">Usuarios</a>
+    <a href="products.html">Productos</a>
+    <a href="requests.html">Solicitudes</a>
+    <a href="reports.html">Reportes</a>
+  </div>
+  <div class="sidebar-logout">
+    <a href="#" @click.prevent="logout()">Salir</a>
+  </div>
+</div>

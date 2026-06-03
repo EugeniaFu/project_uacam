@@ -1,0 +1,1 @@
+<html><body><h2>Solicitudes</h2><table border='1' cellpadding='6'><tr><th>ID</th><th>Usuario</th><th>Folio</th><th>Tipo</th><th>Solicitante</th><th>Fecha</th></tr>@foreach($rows as $r)<tr><td>{{ $r->id }}</td><td>{{ $r->user }}</td><td>{{ $r->folio }}</td><td>{{ $r->type }}</td><td>{{ $r->solicitante }}</td><td>{{ $r->created_at }}</td></tr>@endforeach</table></body></html>

@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <!-- Meta tags para prevenir caché del navegador -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- VALIDACIÓN CRÍTICA: Verificar sesión ANTES de renderizar HTML -->
+    <script>
+    if (!localStorage.getItem('token')) {
+      window.location.replace('index.html');
+    }
+    </script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Productos</title>
+    <link rel="icon" type="image/png" href="assets/logo2.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/exact-style.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+
+<body x-data="productsPage()" x-init="validateSessionWithServer(); load()">
+
+    <!-- Sistema de Notificaciones/Toasts -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+      <template x-for="(toast, idx) in notifications" :key="idx">
+        <div class="alert" :class="'alert-' + toast.type" style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong x-show="toast.title" x-text="toast.title"></strong>
+              <p class="mb-0" x-text="toast.message"></p>
+            </div>
+            <button type="button" class="btn-close" @click="notifications.splice(idx, 1)"></button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Cargar header externo -->
+    <div x-data="{ header: '' }" x-init="fetch('./Template/header.html').then(r => r.text()).then(html => { header = html })">
+        <div x-html="header"></div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+
+            <div class="col-2">
+                <div x-data="{ sidebar: '' }" x-init="fetch('./Template/sidebar.html').then(r => r.text()).then(html => { sidebar = html })">
+                    <div x-html="sidebar"></div>
+                </div>
+            </div>
+
+            <div class="col-9">
+                <div class="card-panel">
+                    <div class="d-flex justify-content-between">
+                        <h3>Productos</h3>
+                        <button class="btn btn-primary" @click="openNew()">Agregar producto</button>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="row mt-2 mb-2">
+                        <div class="col-md-3">
+                            <label class="form-label">Buscar por nombre o codigo</label>
+                            <input type="text" class="form-control" x-model="searchText" placeholder="Ingrese nombre o codigo del producto">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Filtrar por categoría</label>
+                            <select class="form-select" x-model="filterCategory">
+                                <option value="">Todas las categorías</option>
+                                <option value="low">Productos bajos en Stock</option>
+                                <option value="out">Productos Sin Stock</option>
+                                <template x-for="c in categories" :key="c.id">
+                                    <option :value="c.id" x-text="c.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button class="btn btn-outline-primary" @click="exportPDF()">Exportar PDF</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-soft mt-3">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(p, index) in filteredProducts" :key="p.id">
+                                <tr :class="{'table-danger': p.quantity == 0}">
+                                    <td x-text="index + 1"></td>
+                                    <td x-text="p.codigo"></td>
+                                    <td x-text="p.name"></td>
+                                    <td x-text="p.description"></td>
+                                    <td x-text="p.category_name"></td>
+                                    <td x-text="p.quantity"></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-secondary" @click="edit(p)" title="Editar"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger" @click="remove(p.id)" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación Personalizado -->
+    <template x-if="showConfirmDialog">
+        <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered modal-sm animate__animated animate__zoomIn">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" x-text="confirmDialog.title || 'Confirmación'"></h5>
+                        <button type="button" class="btn-close" @click="showConfirmDialog = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p x-text="confirmDialog.message" class="mb-0"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showConfirmDialog = false">Cancelar</button>
+                        <button type="button" class="btn btn-danger" @click="confirmDialog.confirm()" x-text="confirmDialog.confirmText || 'Confirmar'"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Modal para agregar/editar producto -->
+    <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modal}" tabindex="-1" style="background:rgba(0,0,0,0.5);" x-show="modal">
+        <div class="modal-dialog animate__animated animate__zoomIn">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" x-text="form.id ? 'Editar producto' : 'Agregar producto'"></h5>
+                    <button type="button" class="btn-close" @click="modal=false"></button>
+                </div>
+                <form @submit.prevent="save()">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" x-model="form.name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" x-model="form.description" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" x-model="form.category_id" required>
+                                <option value="" disabled selected>Selecciona una categoría</option>
+                                <template x-for="c in categories" :key="c.id">
+                                    <option :value="c.id" x-text="c.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Producto</label>
+                            <select class="form-select" x-model="form.tipo" required>
+                                <option value="" disabled>Selecciona el tipo</option>
+                                <option value="Préstamo">Préstamo</option>
+                                <option value="Salida">Salida</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad</label>
+                            <template x-if="!form.id">
+                                <input type="number" class="form-control" x-model.number="form.quantity" min="0" required>
+                            </template>
+                            <div x-show="form.id">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input id="mainQuantity" type="number" class="form-control" x-model.number="form.quantity" min="0" required>
+                                    <div class="form-check form-switch" style="margin-bottom: 0; white-space: nowrap;">
+                                        <input class="form-check-input" type="checkbox" x-model="form.addQuantity" id="addQuantityCheck">
+                                        <label class="form-check-label" for="addQuantityCheck" style="margin-bottom: 0;">
+                                            Agregar
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Ejemplo/resultado justo debajo del campo Cantidad -->
+                                <div class="mt-1" style="min-height:1.5rem;">
+                                    <small class="form-text text-success" x-show="form.addQuantity" x-html="'Nuevo total: ' + (originalQuantity || 0) + ' + ' + (form.quantity || 0) + ' = <strong>' + ((originalQuantity || 0) + (form.quantity || 0)) + '</strong>'"></small>
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad mínima</label>
+                            <input type="number" class="form-control" x-model="form.min_quantity" min="0" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="modal=false">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/secure-session.js"></script>
+
+    <script>
+        function productsPage() {
+            return {
+                role: (localStorage.getItem('role') || 'encargado'),
+                userName: (localStorage.getItem('userName') || ''),
+                products: [],
+                categories: [],
+                modal: false,
+                form: {},
+                originalQuantity: 0,
+                searchText: '',
+                filterCategory: '',
+                notifications: [],
+                showConfirmDialog: false,
+                confirmDialog: {},
+                showNotification(message, type = 'info', title = '') {
+                    this.notifications.push({ message, type, title });
+                    setTimeout(() => this.notifications.shift(), 4000);
+                },
+                get filteredProducts() {
+                    let filtered = this.products;
+                    if (this.filterCategory) {
+                        if (this.filterCategory === 'low') {
+                            filtered = filtered.filter(p => p.quantity > 0 && p.quantity <= (p.min_quantity || 5));
+                        } else if (this.filterCategory === 'out') {
+                            filtered = filtered.filter(p => p.quantity === 0);
+                        } else {
+                            filtered = filtered.filter(p => p.category_id == this.filterCategory);
+                        }
+                    }
+                    if (this.searchText.trim()) {
+                        const search = this.searchText.toLowerCase();
+                        filtered = filtered.filter(p => 
+                            p.name.toLowerCase().includes(search) || 
+                            (p.codigo && p.codigo.toString().includes(search))
+                        );
+                    }
+                    return filtered;
+                },
+                async load() {
+                    try {
+                        const r = await apiFetch('/products', 'GET');
+                        if (r.ok) this.products = r.data;
+                        const c = await apiFetch('/categories', 'GET');
+                        if (c.ok) this.categories = c.data;
+                        
+                        // Verificar parámetro de filtro en la URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const filter = urlParams.get('filter');
+                        if (filter) {
+                            this.filterCategory = filter;
+                        }
+                        
+                        try {
+                            const s = await apiFetch('/dashboard/summary', 'GET');
+                            if (s.ok) {
+                                this.role = s.data.role || this.role;
+                                this.userName = s.data.user?.name || this.userName;
+                                if (this.userName) localStorage.setItem('userName', this.userName);
+                                if (this.role) localStorage.setItem('role', this.role);
+                            }
+                        } catch (e) {}
+                    } catch(e) {
+                        this.showNotification('Error al cargar productos: ' + e.message, 'danger', 'Error');
+                    }
+                },
+                logout() {
+                    // Llamar a la función mejorada de logout que invalida la sesión en el servidor
+                    window.logout();
+                },
+                openNew() {
+                    this.form = { min_quantity: 5, tipo: 'Préstamo' };
+                    this.modal = true;
+                },
+                edit(p) {
+                    this.form = Object.assign({}, p);
+                    this.originalQuantity = p.quantity;
+                    this.form.addQuantity = false;
+                    this.modal = true;
+                },
+                async save() {
+                    if(!this.form.name || !this.form.description || !this.form.category_id) {
+                        this.showNotification('Por favor completa todos los campos requeridos', 'warning', 'Validación');
+                        return;
+                    }
+                    try {
+                        let dataToSave = Object.assign({}, this.form);
+                        
+                        // If editing and "Agregar" checkbox is checked, sum quantities
+                        if (this.form.id && this.form.addQuantity) {
+                            dataToSave.quantity = this.originalQuantity + (this.form.quantity || 0);
+                        }
+                        
+                        let r;
+                        if (this.form.id)
+                            r = await apiFetch('/products/' + this.form.id, 'PUT', dataToSave);
+                        else
+                            r = await apiFetch('/products', 'POST', dataToSave);
+                        if (r.ok) {
+                            const msg = this.form.id ? 'Producto actualizado' : 'Producto creado exitosamente';
+                            this.showNotification(msg, 'success', '✓ Éxito');
+                            this.modal = false;
+                            this.load();
+                        } else {
+                            const msg = (r.data && (r.data.message || JSON.stringify(r.data.errors||r.data))) || 'Error al guardar';
+                            this.showNotification(msg, 'danger', 'Error');
+                        }
+                    } catch(e) {
+                        this.showNotification('Error: ' + e.message, 'danger', 'Error');
+                    }
+                },
+                async remove(id) {
+                    this.confirmDialog = {
+                        title: '¿Eliminar producto?',
+                        message: '¿Estás seguro de que deseas eliminar este producto?',
+                        confirmText: 'Sí, eliminar',
+                        confirm: async () => {
+                            try {
+                                const r = await apiFetch('/products/' + id, 'DELETE');
+                                if(r.ok) {
+                                    this.showNotification('Producto eliminado correctamente', 'success', '✓ Éxito');
+                                    this.showConfirmDialog = false;
+                                    this.load();
+                                } else {
+                                    this.showNotification(r.data?.message || 'Error al eliminar', 'danger', 'Error');
+                                }
+                            } catch(e) {
+                                this.showNotification('Error: ' + e.message, 'danger', 'Error');
+                            }
+                        }
+                    };
+                    this.showConfirmDialog = true;
+                },
+                async exportPDF() {
+                    try {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        
+                        // Logos
+                        try {
+                            doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
+                            doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
+                        } catch(e) {
+                            console.log('No se pudieron cargar los logos');
+                        }
+                        
+                        // Encabezado
+                        doc.setFontSize(12);
+                        doc.setFont(undefined, 'bold');
+                        doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
+                        doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
+                        
+                        doc.setFontSize(14);
+                        doc.text('REPORTE DE PRODUCTOS', 105, 32, { align: 'center' });
+                        
+                        // Información
+                        doc.setFontSize(9);
+                        doc.setFont(undefined, 'normal');
+                        doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
+                        
+                        // Filtro aplicado
+                        let filterText = 'Filtro: Todos los productos';
+                        if (this.filterCategory === 'low') {
+                            filterText = 'Filtro: Productos bajos en Stock';
+                        } else if (this.filterCategory === 'out') {
+                            filterText = 'Filtro: Productos Sin Stock';
+                        } else if (this.filterCategory) {
+                            const cat = this.categories.find(c => c.id == this.filterCategory);
+                            if (cat) filterText = 'Filtro: Categoría ' + cat.name;
+                        }
+                        if (this.searchText) filterText += ' - Búsqueda: ' + this.searchText;
+                        doc.text(filterText, 15, 50);
+                        
+                        // Tabla
+                        let y = 60;
+                        doc.setFontSize(8);
+                        doc.setFont(undefined, 'bold');
+                        doc.text('#', 15, y);
+                        doc.text('Código', 25, y);
+                        doc.text('Nombre', 50, y);
+                        doc.text('Categoría', 110, y);
+                        doc.text('Stock', 150, y);
+                        doc.text('Mín.', 170, y);
+                        doc.line(15, y + 2, 195, y + 2);
+                        
+                        y += 7;
+                        doc.setFont(undefined, 'normal');
+                        
+                        this.filteredProducts.forEach((p, index) => {
+                            if (y > 270) {
+                                doc.setFontSize(8);
+                                doc.text('Página ' + Math.ceil((index) / 25), 105, 287, { align: 'center' });
+                                
+                                doc.addPage();
+                                
+                                // Repetir encabezado en nueva página
+                                try {
+                                    doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
+                                    doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
+                                } catch(e) {}
+                                
+                                doc.setFontSize(12);
+                                doc.setFont(undefined, 'bold');
+                                doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
+                                doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
+                                
+                                doc.setFontSize(14);
+                                doc.text('REPORTE DE PRODUCTOS', 105, 32, { align: 'center' });
+                                
+                                y = 50;
+                                doc.setFontSize(8);
+                                doc.setFont(undefined, 'bold');
+                                doc.text('#', 15, y);
+                                doc.text('Código', 25, y);
+                                doc.text('Nombre', 50, y);
+                                doc.text('Categoría', 110, y);
+                                doc.text('Stock', 150, y);
+                                doc.text('Mín.', 170, y);
+                                doc.line(15, y + 2, 195, y + 2);
+                                y += 7;
+                                doc.setFont(undefined, 'normal');
+                            }
+                            doc.text((index + 1).toString(), 15, y);
+                            doc.text((p.codigo || '-').substring(0, 15), 25, y);
+                            doc.text((p.name || '').substring(0, 25), 50, y);
+                            doc.text((p.category_name || '-').substring(0, 20), 110, y);
+                            doc.text((p.quantity || 0).toString(), 150, y);
+                            doc.text((p.min_quantity || 0).toString(), 170, y);
+                            y += 6;
+                        });
+                        
+                        doc.setFontSize(8);
+                        doc.text('Página 1', 105, 287, { align: 'center' });
+                        
+                        const filename = 'Productos_' + new Date().toISOString().split('T')[0] + '.pdf';
+                        doc.save(filename);
+                        this.showNotification('PDF exportado correctamente: ' + filename, 'success', '✓ Éxito');
+                    } catch(e) {
+                        this.showNotification('Error al exportar PDF: ' + e.message, 'danger', 'Error');
+                        console.error('Error exportPDF:', e);
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Cargar footer externo -->
+    <div x-data="{ footer: '' }" x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
+        <div x-html="footer"></div>
+    </div>
+
+</body>
+</html>
+

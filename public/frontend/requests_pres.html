@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <!-- Meta tags para prevenir caché del navegador -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <!-- VALIDACIÓN CRÍTICA: Verificar sesión ANTES de renderizar HTML -->
+  <script>
+  if (!localStorage.getItem('token')) {
+    window.location.replace('index.html');
+  }
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Solicitud de Préstamo</title>
+  <link rel="icon" type="image/png" href="assets/logo2.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <link href="css/exact-style.css" rel="stylesheet">
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body x-data="requestPresPage()" x-init="validateSessionWithServer(); load()">
+  <!-- Sistema de Notificaciones/Toasts -->
+  <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+    <template x-for="(toast, idx) in notifications" :key="idx">
+      <div class="alert" :class="'alert-' + toast.type" style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <strong x-show="toast.title" x-text="toast.title"></strong>
+            <p class="mb-0" x-text="toast.message"></p>
+          </div>
+          <button type="button" class="btn-close" @click="notifications.splice(idx, 1)"></button>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <div class="header d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+      <img src="assets/logo1.png" class="logo">
+      <img src="assets/logo2.png" class="logo">
+    </div>
+    <div class="header-title">
+      <h1>FACULTAD DE INGENIERÍA</h1>
+    </div>
+    <div class="d-flex align-items-center">
+      <div class="me-3">Hola <strong x-text="userName"></strong></div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-2">
+        <div class="sidebar d-flex flex-column">
+          <div class="sidebar-nav">
+            <a href="dashboard.html">Inicio</a>
+            <a href="users.html" x-show="role==='coordinador'">Usuarios</a>
+            <a href="products.html">Productos</a>
+            <a href="requests.html">Solicitudes</a>
+            <a href="reports.html">Reportes</a>
+          </div>
+          <div class="sidebar-logout">
+            <a href="#" @click.prevent="logout()">Salir</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-9">
+        <div class="card-panel">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Nueva Solicitud de Préstamo</h3>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success" @click="$refs.mainForm.requestSubmit()">Realizar</button>
+              <button type="button" class="btn btn-secondary" @click="window.location.href='requests.html'">Cancelar</button>
+            </div>
+          </div>
+
+          <form @submit.prevent="save()" x-ref="mainForm">
+            <div class="row mb-3">
+              <!-- Campo de Solicitante -->
+              <div class="col-md-4">
+                <label class="form-label">Solicitante</label>
+                <input type="text" class="form-control" x-model="form.solicitante" required placeholder="Ingrese el nombre del solicitante" pattern="[A-Za-zÀ-ÿ\s]+" oninput="this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '')">
+              </div>
+
+              <!-- Fecha de devolución -->
+              <div class="col-md-4">
+                <label class="form-label">Fecha de Devolución <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" x-model="form.return_date" :min="today" required>
+              </div>
+
+              <!-- Botón Productos Seleccionados -->
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-warning" @click="showSelectedModal = true" x-show="form.items.length > 0">
+                  <span x-text="'Productos Seleccionados (' + form.items.length + ')'">
+                </button>
+              </div>
+            </div>
+
+            <!-- Productos Disponibles -->
+            <div class="mb-4">
+              <h5>Productos Disponibles</h5>
+              
+              <!-- Filtros -->
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <input type="text" class="form-control" x-model="searchProduct" placeholder="Buscar por nombre o código del producto">
+                </div>
+                <div class="col-md-4">
+                  <select class="form-select" x-model="filterCategory">
+                    <option value="">Todas las categorías</option>
+                    <template x-for="cat in categories" :key="cat.id">
+                      <option :value="cat.id" x-text="cat.name"></option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+              
+              <table class="table table-soft">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">Seleccionar</th>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Stock Disponible</th>
+                    <th>Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="p in filteredProducts" :key="p.id">
+                    <tr :class="{ 'table-active': p.selected }">
+                      <td>
+                        <input type="checkbox" class="form-check-input" x-model="p.selected" @change="toggleProduct(p)">
+                      </td>
+                      <td x-text="p.codigo"></td>
+                      <td x-text="p.name"></td>
+                      <td x-text="p.category?.name || 'Sin categoría'"></td>
+                      <td x-text="p.quantity"></td>
+                      <td>
+                        <input type="number" class="form-control" min="1" :max="p.quantity" x-model.number="p.selectedQuantity" @input="syncQuantity(p)" :disabled="!p.selected" style="width: 100px;">
+                      </td>
+                    </tr>
+                  </template>
+                  <template x-if="availableProducts.length === 0">
+                    <tr>
+                      <td colspan="6" class="text-center text-muted">No hay productos disponibles en stock</td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Productos Seleccionados -->
+  <template x-if="showSelectedModal">
+    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered animate__animated animate__zoomIn">
+        <div class="modal-content">
+          <div class="modal-header bg-warning">
+            <h5 class="modal-title">Productos Seleccionados</h5>
+            <button type="button" class="btn-close" @click="showSelectedModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th style="width: 80px;">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="(item, index) in form.items" :key="item.product_id">
+                  <tr>
+                    <td x-text="item.codigo"></td>
+                    <td x-text="item.name"></td>
+                    <td>
+                      <input type="number" class="form-control" min="1" :max="getMaxQuantity(item.product_id)" x-model.number="item.quantity" @change="updateProductQuantity(item.product_id, item.quantity)" style="width: 80px;">
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger" @click="removeProduct(index)">Quitar</button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showSelectedModal = false">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Modal de Confirmación -->
+  <template x-if="showConfirmModal">
+    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered animate__animated animate__zoomIn">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirmar Solicitud de Préstamo</h5>
+            <button type="button" class="btn-close" @click="showConfirmModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <strong>Solicitante:</strong>
+              <p x-text="form.solicitante"></p>
+            </div>
+            <div class="mb-3">
+              <strong>Fecha de Devolución:</strong>
+              <p x-text="form.return_date || 'No especificada'"></p>
+            </div>
+            <div class="mb-3">
+              <strong>Productos Seleccionados:</strong>
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="item in form.items" :key="item.product_id">
+                    <tr>
+                      <td x-text="item.name"></td>
+                      <td x-text="item.quantity"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" x-model="generateVale" id="generateVale">
+                <label class="form-check-label" for="generateVale">
+                  <strong>Generar vale (PDF)</strong>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showConfirmModal = false">Cancelar</button>
+            <button type="button" class="btn btn-success" @click="confirmSave()">Confirmar y Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/secure-session.js"></script>
+  <script>
+  function requestPresPage(){
+    return {
+      role: (localStorage.getItem('role') || 'encargado'),
+      userName: (localStorage.getItem('userName') || ''),
+      products: [],
+      categories: [],
+      showConfirmModal: false,
+      showSelectedModal: false,
+      generateVale: true,
+      searchProduct: '',
+      filterCategory: '',
+      notifications: [],
+      today: new Date().toISOString().split('T')[0],
+      form: {
+        type: 'prestamo',
+        solicitante: '',
+        return_date: '',
+        items: []
+      },
+      showNotification(message, type = 'info', title = '') {
+        this.notifications.push({ message, type, title });
+        setTimeout(() => this.notifications.shift(), 4000);
+      },
+      
+      get availableProducts() {
+        // Filtrar solo productos con cantidad mayor a 0 y tipo "Préstamo"
+        return this.products.filter(p => p.quantity > 0 && p.tipo === 'Préstamo');
+      },
+      
+      get filteredProducts() {
+        let filtered = this.availableProducts;
+        
+        // Filtrar por categoría
+        if (this.filterCategory) {
+          filtered = filtered.filter(p => p.category_id == this.filterCategory);
+        }
+        
+        // Filtrar por nombre o código
+        if (this.searchProduct.trim()) {
+          const search = this.searchProduct.toLowerCase();
+          filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(search) || 
+            (p.codigo && p.codigo.toString().includes(search))
+          );
+        }
+        
+        return filtered;
+      },
+      
+      async load(){
+        // Cargar productos
+        const p = await apiFetch('/products','GET');
+        if(p.ok) {
+          this.products = p.data.map(product => ({
+            ...product,
+            selected: false,
+            selectedQuantity: 1,
+            // Asegurar que category tenga la estructura correcta
+            category: product.category || { id: product.category_id, name: product.category_name }
+          }));
+        }
+        
+        // Cargar categorías
+        const c = await apiFetch('/categories','GET');
+        if(c.ok) {
+          this.categories = c.data;
+        }
+        
+        // Cargar información del usuario
+        try{
+          const s = await apiFetch('/dashboard/summary','GET');
+          if(s.ok){
+            this.role = s.data.role || this.role;
+            this.userName = s.data.user?.name || this.userName;
+            if(this.userName) localStorage.setItem('userName', this.userName);
+            if(this.role) localStorage.setItem('role', this.role);
+          }
+        }catch(e){}
+      },
+      
+      toggleProduct(product) {
+        if (product.selected) {
+          // Validar que la cantidad sea válida
+          const quantity = parseInt(product.selectedQuantity) || 1;
+          if (quantity < 1 || quantity > product.quantity) {
+            alert('Cantidad no válida');
+            product.selected = false;
+            return;
+          }
+          
+          // Verificar si el producto ya está en la lista
+          const existingIndex = this.form.items.findIndex(item => item.product_id === product.id);
+          if (existingIndex >= 0) {
+            // Actualizar la cantidad si ya existe
+            this.form.items[existingIndex].quantity = quantity;
+          } else {
+            // Agregar producto a la lista
+            this.form.items.push({
+              product_id: product.id,
+              codigo: product.codigo,
+              name: product.name,
+              quantity: quantity
+            });
+          }
+          console.log('Productos en solicitud:', this.form.items.length);
+        } else {
+          // Quitar producto de la lista
+          const index = this.form.items.findIndex(item => item.product_id === product.id);
+          if (index >= 0) {
+            this.form.items.splice(index, 1);
+          }
+          // Resetear la cantidad seleccionada
+          product.selectedQuantity = 1;
+          console.log('Productos en solicitud:', this.form.items.length);
+        }
+      },
+      
+      removeProduct(index) {
+        const item = this.form.items[index];
+        // Desmarcar el checkbox del producto
+        const product = this.availableProducts.find(p => p.id === item.product_id);
+        if (product) {
+          product.selected = false;
+          product.selectedQuantity = 1;
+        }
+        this.form.items.splice(index, 1);
+      },
+      
+      getMaxQuantity(productId) {
+        const product = this.products.find(p => p.id === productId);
+        return product ? product.quantity : 1;
+      },
+      
+      updateProductQuantity(productId, newQuantity) {
+        // Actualizar la cantidad en el producto de la tabla principal
+        const product = this.products.find(p => p.id === productId);
+        if (product) {
+          product.selectedQuantity = newQuantity;
+        }
+        // También sincronizar con la lista de items si ya existe
+        const idx = this.form.items.findIndex(item => item.product_id === productId);
+        if (idx >= 0) {
+          this.form.items[idx].quantity = parseInt(newQuantity) || 1;
+        }
+      },
+
+      syncQuantity(product) {
+        // Sincronizar cuando se cambia la cantidad en la tabla principal
+        const idx = this.form.items.findIndex(item => item.product_id === product.id);
+        const qty = parseInt(product.selectedQuantity) || 1;
+        if (idx >= 0) {
+          this.form.items[idx].quantity = qty;
+        }
+      },
+      
+      save(){
+        if (!this.form.solicitante.trim()) {
+          this.showNotification('Ingresa el nombre del solicitante', 'warning', 'Validación');
+          return;
+        }
+        if (!this.form.return_date) {
+          this.showNotification('Selecciona la fecha de devolución', 'warning', 'Validación');
+          return;
+        }
+        if (this.form.items.length === 0) {
+          this.showNotification('Agrega al menos un producto a la solicitud', 'warning', 'Validación');
+          return;
+        }
+        this.form.items = this.availableProducts
+          .filter(p => p.selected)
+          .map(p => ({
+            product_id: p.id,
+            codigo: p.codigo,
+            name: p.name,
+            quantity: parseInt(p.selectedQuantity) || 1
+          }));
+        this.showConfirmModal = true;
+      },
+      
+      async confirmSave(){
+        try {
+          const body = {
+            type: this.form.type,
+            solicitante: this.form.solicitante,
+            items: this.form.items,
+            return_date: this.form.return_date || null
+          };
+          const result = await apiFetch('/requests', 'POST', body);
+          if (result.ok) {
+            this.showConfirmModal = false;
+            if (this.generateVale) {
+              this.generateValePDF(result.data);
+            }
+            this.showNotification('Solicitud de préstamo creada exitosamente', 'success', '✓ Éxito');
+            setTimeout(() => {
+              window.location.href = 'requests.html';
+            }, 1500);
+          } else {
+            const msg = result.data?.message || result.error || 'Error al crear la solicitud';
+            this.showNotification(msg, 'danger', 'Error');
+          }
+        } catch(e) {
+          this.showNotification('Error: ' + e.message, 'danger', 'Error');
+        }
+      },
+      
+      generateValePDF(requestData) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const itemsPerHalfPage = 6;
+        const totalItems = this.form.items.length;
+        
+        // Función para dibujar un vale
+        const drawVale = (yOffset, items, isFullPage = false) => {
+          const startY = yOffset;
+          
+          // Logos (si están disponibles)
+          try {
+            doc.addImage('assets/logo1.png', 'PNG', 15, startY + 3, 25, 25);
+            doc.addImage('assets/logo2.png', 'PNG', 170, startY + 3, 25, 25);
+          } catch(e) {
+            console.log('No se pudieron cargar los logos');
+          }
+          
+          // Título
+          doc.setFontSize(13);
+          doc.setFont(undefined, 'bold');
+          doc.text('VALE DE ' + (this.form.type === 'prestamo' ? 'PRÉSTAMO' : 'SALIDA').toUpperCase(), 105, startY + 26, { align: 'center' });
+          
+          // Información básica
+          doc.setFontSize(9);
+          doc.setFont(undefined, 'normal');
+          doc.text('Folio: ' + (requestData.folio || 'N/A'), 20, startY + 38);
+          doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 120, startY + 38);
+          
+          doc.text('Solicitante: ' + this.form.solicitante, 20, startY + 54);
+          doc.text('Entrega: ' + this.userName, 120, startY + 54);
+          if (this.form.return_date) {
+            doc.text('Fecha de devolución: ' + this.form.return_date, 20, startY + 62);
+          }
+          
+          // Tabla de productos
+          doc.setFont(undefined, 'bold');
+          doc.text('Productos:', 20, startY + 72);
+          doc.setFont(undefined, 'normal');
+          
+          let tableY = startY + 80;
+          doc.setFontSize(8);
+          
+          // Encabezados de tabla
+          doc.setFont(undefined, 'bold');
+          doc.text('Producto', 25, tableY);
+          doc.text('Cantidad', 150, tableY);
+          doc.line(20, tableY + 2, 190, tableY + 2);
+          doc.setFont(undefined, 'normal');
+          
+          tableY += 7;
+          
+          // Items
+          items.forEach((item) => {
+            doc.text(item.name, 25, tableY);
+            doc.text(item.quantity.toString(), 150, tableY);
+            tableY += 5;
+          });
+          
+          // Firmas
+          let signY;
+          if (isFullPage) {
+            // Firmas al final de la página completa
+            signY = 260;
+          } else {
+            // Firmas al final de la media página
+            signY = startY + 130;
+          }
+          
+          doc.line(30, signY, 90, signY);
+          doc.line(120, signY, 180, signY);
+          doc.setFontSize(9);
+          doc.text('Firma del Solicitante', 45, signY + 5);
+          doc.text('Firma del Encargado', 135, signY + 5);
+          
+          // Línea divisoria si es la primera copia en media página
+          if (yOffset === 0 && !isFullPage) {
+            doc.setLineDash([3, 3]);
+            doc.line(10, 148.5, 200, 148.5);
+            doc.setLineDash([]);
+          }
+        };
+        
+        // Si hay más de 6 productos, crear página completa para cada copia
+        if (totalItems > itemsPerHalfPage) {
+          // Primera copia - página completa
+          drawVale(0, this.form.items, true);
+          
+          // Segunda copia - nueva página
+          doc.addPage();
+          drawVale(0, this.form.items, true);
+        } else {
+          // Si hay 6 o menos productos, dividir en dos mitades (formato original)
+          drawVale(0, this.form.items, false);      // Primera copia en la mitad superior
+          drawVale(148.5, this.form.items, false);  // Segunda copia en la mitad inferior
+        }
+        
+        // Guardar el PDF
+        const fileName = 'vale_' + (requestData.folio || 'solicitud') + '.pdf';
+        doc.save(fileName);
+      },
+      
+      logout(){
+        // Llamar a la función mejorada de logout que invalida la sesión en el servidor
+        window.logout();
+      }
+    };
+  }
+  </script>
+
+  <!-- Cargar footer externo -->
+  <div x-data="{ footer: '' }" x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
+    <div x-html="footer"></div>
+  </div>
+
+</body>
+</html>

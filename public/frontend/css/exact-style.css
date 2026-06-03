@@ -1,0 +1,410 @@
+/* exact-style.css - designed to match the provided captures */
+
+/* Importar fuente elegante y juvenil */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Montserrat:wght@700&display=swap');
+
+/* Variables globales (colores del tema) */
+:root{
+  --navy:#071635;      /* Azul marino oscuro para sidebar y textos */
+  --accent:#f2d300;    /* Amarillo acento usado en header y botones */
+  --panel:#ffffff;     /* Blanco para tarjetas/paneles */
+  --muted:#6c757d;     /* Gris suave para textos secundarios */
+  --danger:#b00020;    /* Rojo oscuro para estados de peligro */
+}
+
+/* Ajuste global del box model */
+*{box-sizing:border-box}
+
+/* Estilos del body */
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Arial,sans-serif; /* Tipografía principal */
+  background:#f4f6f8;  /* Fondo gris muy claro */
+  color:#222;          /* Color general del texto */
+}
+
+/* Barra superior (header) */
+.header{
+  background:var(--accent); /* Color amarillo */
+  display:flex;             /* Elementos alineados en fila */
+  align-items:center;       /* Centra verticalmente */
+  padding:12px 20px;
+  gap:12px;                 /* Espaciado entre elementos */
+  box-shadow:0 2px 6px rgba(0,0,0,0.06); /* Sombra ligera */
+}
+
+/* Título del header centrado */
+.header-title{
+  flex:1;
+  text-align:center;
+}
+
+.header-title h1{
+  margin:0;
+  padding:0;
+  font-family:'Poppins', 'Montserrat', sans-serif;
+  font-size:1.6rem;
+  font-weight:700;
+  color:var(--navy);
+  letter-spacing:0.5px;
+}
+
+/* Logo dentro del header */
+.header img.logo{
+  height:56px;
+}
+
+/* El botón de logout se manda al extremo derecho */
+.header .logout{
+  margin-left:auto;
+}
+
+/* Contenedor general Bootstrap */
+.container-fluid{
+  padding:18px;
+}
+
+/* Filas como flexbox */
+.row{
+  display:flex;
+  gap:18px; /* Espacio entre las columnas */
+}
+
+/* Columna izquierda (sidebar) */
+.col-3{
+  flex:0 0 25%;   /* Ocupa el 25% */
+  max-width:25%;
+}
+
+/* Columna derecha (contenido) */
+.col-9{
+  flex:1;         /* Ocupa el espacio restante */
+}
+
+/* Estilos de la barra lateral */
+.sidebar{
+  background:var(--navy);  /* Azul marino */
+  color:var(--accent);     /* Texto amarillo */
+  padding:20px;
+  border-radius:10px;
+  min-height:72vh;         /* Altura mínima */
+  display:flex;
+  flex-direction:column;
+}
+
+/* Contenedor de navegación principal */
+.sidebar-nav{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+}
+
+/* Contenedor de logout (se empuja al final) */
+.sidebar-logout{
+  margin-top:auto;
+  padding-top:20px;
+  border-top:1px solid rgba(242,211,0,0.2);
+}
+
+/* Links dentro de la barra lateral */
+.sidebar a{
+  display:block;
+  color:var(--accent);
+  text-decoration:none;
+  padding:10px 8px;
+  border-radius:6px;
+}
+
+/* Logout link al final del sidebar */
+.sidebar-logout a{
+  display:block;
+  color:var(--accent);
+  text-decoration:none;
+  padding:10px 8px;
+  border-radius:6px;
+}
+
+/* Hover y link activo */
+.sidebar a.active, 
+.sidebar a:hover{
+  background:rgba(242,211,0,0.12); /* Amarillo traslúcido */
+  color:#ffffff;                   /* Texto azul */
+  font-weight:600;
+}
+
+/* Tarjetas/Panels de contenido */
+.card-panel{
+  background:var(--panel); /* Blanco */
+  padding:18px;
+  border-radius:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04); /* Sombra ligera */
+}
+
+/* Tablas estilizadas */
+.table-soft{
+  width:100%;
+  border-collapse:collapse;
+}
+
+/* Celdas de tabla */
+.table-soft th, .table-soft td{
+  padding:10px;
+  border-bottom:1px solid #eef2f5; /* Línea gris clara */
+  text-align:left;
+}
+
+/* Filas con estado de peligro */
+.table-danger td{
+  background:rgba(176,0,32,0.06); /* Fondo rojo suave */
+}
+
+/* Badge de prioridad baja */
+.badge-low{
+  background:#fff4cc; /* Amarillo muy claro */
+  color:#805400;      /* Café/amarillo oscuro */
+  padding:6px 8px;
+  border-radius:6px;
+  font-weight:600;
+}
+
+/* Botón amarillo estilo primario */
+.btn-primary-yellow{
+  background:var(--accent);
+  border:none;
+  color:#071635; /* Texto azul */
+  padding:8px 12px;
+  border-radius:8px;
+}
+
+/* Texto pequeño y en gris suave */
+.small-muted{
+  color:var(--muted);
+  font-size:0.9rem;
+}
+
+/* Clase para centrar modales en la pantalla */
+.modal-centered{
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  z-index:2000;
+}
+
+/* Texto pequeño para notas o información secundaria */
+.footer-note{
+  font-size:0.8rem;
+  color:#888;
+  margin-top:12px;
+}
+
+/* Efecto de crecimiento global para todos los botones */
+.btn,
+button,
+input[type="button"],
+input[type="submit"]{
+  transition:all 0.3s ease !important;
+}
+
+.btn:hover,
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover{
+  transform:scale(1.05) !important;
+}
+
+/* Estilos personalizados para botones btn-primary (azul marino) */
+.btn-primary{
+  background-color:var(--navy) !important;
+  border-color:var(--navy) !important;
+  color:#ffffff !important;
+  transition:all 0.3s ease !important;
+}
+
+.btn-primary:hover{
+  background-color:#051028 !important;
+  border-color:#051028 !important;
+  color:#ffffff !important;
+  transform:scale(1.05);
+  box-shadow:0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.btn-primary:focus,
+.btn-primary:active{
+  background-color:#051028 !important;
+  border-color:#051028 !important;
+  color:#ffffff !important;
+  box-shadow:0 0 0 0.25rem rgba(7,22,53,0.25) !important;
+}
+
+/* Botón de Préstamo - Rojo Pastel */
+.btn-prestamo{
+  background-color:#f4a8a8 !important;
+  border-color:#f4a8a8 !important;
+  color:#5c1a1a !important;
+  transition:all 0.3s ease !important;
+}
+
+.btn-prestamo:hover{
+  background-color:#eb8f8f !important;
+  border-color:#eb8f8f !important;
+  color:#5c1a1a !important;
+  transform:scale(1.05);
+  box-shadow:0 4px 8px rgba(244,168,168,0.3) !important;
+}
+
+.btn-prestamo:focus,
+.btn-prestamo:active{
+  background-color:#eb8f8f !important;
+  border-color:#eb8f8f !important;
+  color:#5c1a1a !important;
+  box-shadow:0 0 0 0.25rem rgba(244,168,168,0.25) !important;
+}
+
+/* Botón de Salida - Verde Pastel */
+.btn-salida{
+  background-color:#a8dba8 !important;
+  border-color:#a8dba8 !important;
+  color:#1a5c1a !important;
+  transition:all 0.3s ease !important;
+}
+
+.btn-salida:hover{
+  background-color:#8bc58b !important;
+  border-color:#8bc58b !important;
+  color:#1a5c1a !important;
+  transform:scale(1.05);
+  box-shadow:0 4px 8px rgba(168,219,168,0.3) !important;
+}
+
+.btn-salida:focus,
+.btn-salida:active{
+  background-color:#8bc58b !important;
+  border-color:#8bc58b !important;
+  color:#1a5c1a !important;
+  box-shadow:0 0 0 0.25rem rgba(168,219,168,0.25) !important;
+}
+
+/* Botón de Movimientos - Rojo Pastel */
+.btn-movimientos{
+  background-color:#f4a8a8 !important;
+  border-color:#f4a8a8 !important;
+  color:#5c1a1a !important;
+  opacity:0.6;
+  transition:all 0.3s ease;
+}
+
+.btn-movimientos:hover{
+  background-color:#eb8f8f !important;
+  border-color:#eb8f8f !important;
+  color:#5c1a1a !important;
+  opacity:0.85;
+  transform:scale(1.05);
+  box-shadow:0 4px 8px rgba(244,168,168,0.3) !important;
+}
+
+.btn-movimientos:focus,
+.btn-movimientos:active{
+  background-color:#eb8f8f !important;
+  border-color:#eb8f8f !important;
+  color:#5c1a1a !important;
+  box-shadow:0 0 0 0.25rem rgba(244,168,168,0.25) !important;
+}
+
+/* Botón de Movimientos ACTIVO */
+.btn-movimientos-active{
+  background-color:#f4a8a8 !important;
+  border-color:#d97070 !important;
+  border-width:3px !important;
+  color:#5c1a1a !important;
+  opacity:1;
+  font-weight:700;
+  box-shadow:0 4px 8px rgba(244,168,168,0.4) !important;
+  transition:all 0.3s ease;
+}
+
+.btn-movimientos-active:hover{
+  background-color:#eb8f8f !important;
+  border-color:#c85c5c !important;
+  transform:scale(1.05);
+}
+
+/* Botón de Solicitudes - Verde Pastel */
+.btn-solicitudes{
+  background-color:#a8dba8 !important;
+  border-color:#a8dba8 !important;
+  color:#1a5c1a !important;
+  opacity:0.6;
+  transition:all 0.3s ease;
+}
+
+.btn-solicitudes:hover{
+  background-color:#8bc58b !important;
+  border-color:#8bc58b !important;
+  color:#1a5c1a !important;
+  opacity:0.85;
+  transform:scale(1.05);
+  box-shadow:0 4px 8px rgba(168,219,168,0.3) !important;
+}
+
+.btn-solicitudes:focus,
+.btn-solicitudes:active{
+  background-color:#8bc58b !important;
+  border-color:#8bc58b !important;
+  color:#1a5c1a !important;
+  box-shadow:0 0 0 0.25rem rgba(168,219,168,0.25) !important;
+}
+
+/* Botón de Solicitudes ACTIVO */
+.btn-solicitudes-active{
+  background-color:#a8dba8 !important;
+  border-color:#6ba86b !important;
+  border-width:3px !important;
+  color:#1a5c1a !important;
+  opacity:1;
+  font-weight:700;
+  box-shadow:0 4px 8px rgba(168,219,168,0.4) !important;
+  transition:all 0.3s ease;
+}
+
+.btn-solicitudes-active:hover{
+  background-color:#8bc58b !important;
+  border-color:#579457 !important;
+  transform:scale(1.05);
+}
+
+/* Botones Bootstrap success, danger, warning, info, secondary, outline */
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-secondary,
+.btn-outline-primary,
+.btn-outline-danger,
+.btn-outline-success,
+.btn-outline-warning{
+  transition:all 0.3s ease !important;
+}
+
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover,
+.btn-secondary:hover,
+.btn-outline-primary:hover,
+.btn-outline-danger:hover,
+.btn-outline-success:hover,
+.btn-outline-warning:hover{
+  transform:scale(1.05) !important;
+  box-shadow:0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Responsivo para pantallas pequeñas */
+@media(max-width:768px){
+  .col-3{display:none;} /* Oculta la barra lateral */
+  .col-9{flex:1;}       /* Contenido ocupa todo el ancho */
+}
+
+
+
+

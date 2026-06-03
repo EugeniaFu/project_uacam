@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UAC - Login</title>
+<link rel="icon" type="image/png" href="assets/logo2.png">
+
+<!-- BOOTSTRAP -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- BOOTSTRAP ICONS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- GOOGLE FONT LATO -->
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+<!-- TU CSS -->
+<link href="css/exact-style.css" rel="stylesheet">
+
+<style>
+   
+ body {
+        background: #ffffff;
+        font-family: "Lato", sans-serif !important;
+    }
+
+    .login-container {
+        max-width: 520px;
+        margin: 70px auto;
+        text-align: center;
+    }
+
+    .login-card {
+        background: #021233;
+        padding: 40px;
+        border-radius: 25px;
+        color: white;
+        box-shadow: 0 0 20px rgba(0,0,0,.15);
+    }
+
+    .login-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #F5D223;
+        margin-bottom: 25px;
+    }
+
+    label {
+        font-weight: 700;
+        color: #ffffffb7;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 17px;
+    }
+
+    .btn-primary-yellow {
+        background: #F5D223;
+        color: #000;
+        border: none;
+        padding: 10px 25px;
+        font-weight: 700;
+        border-radius: 8px;
+        transition: .2s;
+    }
+
+    .btn-primary-yellow:hover {
+        background: #d4b81f;
+    }
+
+    .logos {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 20px;
+    }
+
+    .logos img {
+        height: 85px;
+    }
+
+    .btn-back {
+        background: transparent;
+        color: #F5D223;
+        border: 2px solid #F5D223;
+        padding: 8px 20px;
+        font-weight: 700;
+        border-radius: 8px;
+        transition: .2s;
+        margin-right: 10px;
+    }
+
+    .btn-back:hover {
+        background: #F5D223;
+        color: #000;
+    }
+
+    .user-display {
+        background: #0a2456;
+        padding: 10px 15px;
+        border-radius: 8px;
+        color: #F5D223;
+        font-weight: 700;
+        margin-bottom: 15px;
+        text-align: left;
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        color: #6c757d;
+        font-size: 18px;
+    }
+
+    .password-toggle:hover {
+        color: #495057;
+    }
+
+</style>
+
+</head>
+
+<body>
+
+<!-- Script para limpiar datos de sesión al cargar login -->
+<script>
+  // Si hay token, significa que alguien intenta volver al login con sesión activa
+  // Limpiar todo para garantizar un login limpio
+  if (localStorage.getItem('token')) {
+    console.log('Token detectado en login, limpiando sesión...');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('role');
+    sessionStorage.clear();
+  }
+</script>
+
+<div class="login-container">
+
+    <!-- LOGOS -->
+    <div class="logos">
+        <img src="assets/logo1.png">
+        <img src="assets/logo2.png">
+    </div>
+
+    <div class="login-card">
+        <h3 class="login-title">INICIO DE SESIÓN</h3>
+
+        <form x-data="login()" @submit.prevent="proceed" novalidate>
+            
+            <!-- Usuario -->
+            <div class="mb-3" x-show="stage==='check'">
+                <label>GMAIL</label>
+                <input class="form-control" name="user" x-model="user" required>
+            </div>
+
+            <!-- Mostrar usuario seleccionado -->
+            <div x-show="stage==='password'" class="user-display">
+                Usuario: <span x-text="user"></span>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3" x-show="stage==='password'">
+                <label>CONTRASEÑA</label>
+                <div class="password-wrapper">
+                    <input :type="showPassword ? 'text' : 'password'" class="form-control" name="password" x-model="password" minlength="4" required>
+                    <button type="button" class="password-toggle" @click="showPassword = !showPassword">
+                        <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn-back" x-show="stage==='password'" @click="goBack()">
+                    CAMBIAR USUARIO
+                </button>
+                <button type="submit" class="btn-primary-yellow" :disabled="loading">
+                    <span x-show="!loading">CONTINUAR</span>
+                    <span x-show="loading">Procesando...</span>
+                </button>
+            </div>
+
+            <!-- Error -->
+            <div class="mt-3 text-danger" x-text="error"></div>
+
+        </form>
+    </div>
+</div>
+
+<!-- JS -->
+<script src="js/app.js"></script>
+
+<script>
+function login(){
+  return {
+    user: '',
+    password: '',
+    stage: 'check',
+    error: '',
+    loading: false,
+    showPassword: false,
+    goBack(){
+      this.stage = 'check';
+      this.password = '';
+      this.error = '';
+    },
+    async proceed(){
+      if(this.loading) return;
+      this.error = '';
+      this.loading = true;
+      
+      try {
+        if(this.stage === 'check'){
+          if(!this.user.trim()){
+            this.error = 'Ingrese usuario o email';
+            this.loading = false;
+            return;
+          }
+          
+          if(!this.user.includes('@uacam.mx')){
+            this.error = 'Solo se permiten usuarios @uacam.mx';
+            this.loading = false;
+            return;
+          }
+          
+          await getCsrfToken();
+          const r = await apiFetch('/auth/check-account', 'POST', {user: this.user});
+          
+          // Verificar si está bloqueado (status 429)
+          if(r.status === 429){
+            this.error = r.data.message || 'Cuenta temporalmente bloqueada';
+            this.loading = false;
+            return;
+          }
+          
+          if(r.ok && r.data.exists){
+            this.stage = 'password';
+          } else {
+            this.error = 'Cuenta no encontrada';
+          }
+        } else {
+          if(!this.password.trim()){
+            this.error = 'Ingrese contrasena';
+            this.loading = false;
+            return;
+          }
+          
+          const r = await apiFetch('/auth/login', 'POST', {user: this.user, password: this.password});
+          
+          // Verificar si está bloqueado (status 429)
+          if(r.status === 429){
+            this.error = r.data.message || 'Cuenta temporalmente bloqueada';
+            this.loading = false;
+            return;
+          }
+          
+          if(r.ok && r.data.token){
+            localStorage.setItem('token', r.data.token);
+
+            try{
+              const name = (r.data.user && r.data.user.name) ? r.data.user.name : '';
+              const role = r.data.role || '';
+              if(name) localStorage.setItem('userName', name);
+              if(role) localStorage.setItem('role', role);
+            }catch(e){}
+
+            window.location = 'dashboard.html';
+          } else {
+            this.error = r.data.message || 'Credenciales invalidas';
+          }
+        }
+      } catch(e) {
+        this.error = 'Error: ' + e.message;
+      } finally {
+        this.loading = false;
+      }
+    }
+  };
+}
+</script>
+
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+</body>
+</html>

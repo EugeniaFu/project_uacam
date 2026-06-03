@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashboard API</title>
+</head>
+<body>
+    <h1>Test Dashboard API</h1>
+    <div>
+        <label>Token:</label>
+        <input type="text" id="token" style="width: 500px" placeholder="Pega tu token aquí">
+        <button onclick="testAPI()">Probar API</button>
+    </div>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const token = document.getElementById('token').value;
+            const resultEl = document.getElementById('result');
+            
+            resultEl.textContent = 'Probando...';
+            
+            try {
+                const response = await fetch('/api/dashboard/summary', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultEl.textContent = JSON.stringify({
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data
+                }, null, 2);
+            } catch (e) {
+                resultEl.textContent = 'Error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

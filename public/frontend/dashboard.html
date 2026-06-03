@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Meta tags para prevenir caché del navegador -->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>UAC - Dashboard</title>
+<link rel="icon" type="image/png" href="assets/logo2.png">
+<!-- VALIDACIÓN CRÍTICA: Verificar sesión ANTES de renderizar HTML -->
+<script>
+if (!localStorage.getItem('token')) {
+  window.location.replace('index.html');
+}
+</script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+<link href="css/exact-style.css" rel="stylesheet">
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body x-data="dashboard()" x-init="validateSessionWithServer(); init()">
+  <!-- Sistema de Notificaciones/Toasts -->
+  <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+    <template x-for="(toast, idx) in notifications" :key="idx">
+      <div class="alert" :class="'alert-' + toast.type" style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <strong x-show="toast.title" x-text="toast.title"></strong>
+            <p class="mb-0" x-text="toast.message"></p>
+          </div>
+          <button type="button" class="btn-close" @click="notifications.splice(idx, 1)"></button>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Cargar header externo -->
+  <div x-data="{ header: '' }" x-init="fetch('./Template/header.html').then(r => r.text()).then(html => { header = html })">
+    <div x-html="header"></div>
+  </div>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-2">
+        <div x-data="{ sidebar: '' }" x-init="fetch('./Template/sidebar.html').then(r => r.text()).then(html => { sidebar = html })">
+          <div x-html="sidebar"></div>
+        </div>
+      </div>
+      <div class="col-9">
+        <!-- Solicitudes Pendientes -->
+        <div class="card-panel mb-4 animate__animated animate__fadeInUp" style="border-left: 4px solid #0d6efd;">
+          <div class="mb-3 d-flex justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <h4 class="text-primary mb-0">Solicitudes de Préstamo - Pendientes</h4>
+              <span class="small-muted" x-text="'Total: ' + filteredPending.length + ' | Mostrando: ' + visibleCount"></span>
+              <button class="btn btn-sm" style="background-color: #0d6efd; color: white; border: none;" @click="toggleShowAll()">
+                <span x-text="showAllPending ? 'Ver menos' : 'Ver más'"></span>
+              </button>
+            </div>
+            <input type="text" class="form-control" style="flex: 0 0 300px;" x-model="searchProduct" @input="searchProduct = searchProduct.replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ ]/g, '')" placeholder="🔍 Buscar artículo prestado">
+          </div>
+          <table class="table table-soft">
+            <thead class="table-primary"><tr><th>#</th><th>Folio</th><th>Solicitante</th><th>Fecha devolución</th><th>Acción</th></tr></thead>
+            <tbody>
+              <!-- Primeros 5 registros (siempre visibles) -->
+              <template x-for="(d,i) in filteredPending.slice(0, 5)" :key="d.id + '_first'">
+                <tr :class="{'table-danger': d.overdue}">
+                  <td x-text="i+1"></td>
+                  <td x-text="d.folio"></td>
+                  <td x-text="d.solicitante"></td>
+                  <td x-text="d.return_date"></td>
+                  <td>
+                    <button class="btn btn-success btn-sm" @click="markReturned(d.id)">Devuelto</button>
+                    <a href="#" class="text-primary ms-2" @click.prevent="viewDetails(d.id)">Ver más...</a>
+                  </td>
+                </tr>
+              </template>
+              
+              <!-- Registros adicionales (6 en adelante - solo visibles cuando showAllPending es true) -->
+              <template x-if="showAllPending">
+                <template x-for="(d,i) in filteredPending.slice(5)" :key="d.id + '_extra'">
+                  <tr :class="{'table-danger': d.overdue}">
+                    <td x-text="i+6"></td>
+                    <td x-text="d.folio"></td>
+                    <td x-text="d.solicitante"></td>
+                    <td x-text="d.return_date"></td>
+                    <td>
+                      <button class="btn btn-success btn-sm" @click="markReturned(d.id)">Devuelto</button>
+                      <a href="#" class="text-primary ms-2" @click.prevent="viewDetails(d.id)">Ver más...</a>
+                    </td>
+                  </tr>
+                </template>
+              </template>
+              
+              <tr x-show="filteredPending.length==0"><td colspan="5">No hay solicitudes pendientes</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row">
+          <!-- Productos bajo stock -->
+          <div class="col-5">
+            <div class="card-panel animate__animated animate__fadeInLeft" style="border-left: 4px solid #ffa007;">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-warning mb-0">Productos bajo stock</h5>
+                <button class="btn btn-warning btn-sm" @click="viewLowStock()">Ver más</button>
+              </div>
+              <table class="table table-soft">
+                <thead class="table-warning"><tr><th>Producto</th><th>Stock</th></tr></thead>
+                <tbody><template x-for="p in low.slice(0, 5)"><tr><td x-text="p.name"></td><td><span class="badge-low" x-text="p.quantity"></span></td></tr></template></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Productos agotados -->
+          <div class="col-5">
+            <div class="card-panel animate__animated animate__fadeInRight" style="border-left: 4px solid #dc3545;">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-danger mb-0">Productos agotados</h5>
+                <button class="btn btn-danger btn-sm" @click="viewOutOfStock()">Ver más</button>
+              </div>
+              <table class="table table-soft">
+                <thead class="table-danger"><tr><th>Producto</th></tr></thead>
+                <tbody><template x-for="p in out.slice(0, 5)"><tr><td class="text-danger" x-text="p.name"></td></tr></template></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalles de Solicitud -->
+  <template x-if="showModal">
+    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered modal-lg animate__animated animate__zoomIn">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalles de la Solicitud</h5>
+            <button type="button" class="btn-close" @click="closeModal()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong>Folio:</strong>
+                <p x-text="requestDetails?.folio"></p>
+              </div>
+              <div class="col-md-6">
+                <strong>Tipo:</strong>
+                <p x-text="translateType(requestDetails?.type)"></p>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong>Solicitante:</strong>
+                <p x-text="requestDetails?.solicitante"></p>
+              </div>
+              <div class="col-md-6">
+                <strong>Estado:</strong>
+                <p x-text="translateStatus(requestDetails?.status)"></p>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong>Fecha de Solicitud:</strong>
+                <p x-text="requestDetails?.created_at"></p>
+              </div>
+              <div class="col-md-6" x-show="requestDetails?.return_date">
+                <strong>Fecha de Devolución:</strong>
+                <p x-text="requestDetails?.return_date"></p>
+              </div>
+            </div>
+            <div class="mb-3" x-show="requestDetails?.items && requestDetails.items.length > 0">
+              <strong>Productos:</strong>
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="item in requestDetails.items" :key="item.id">
+                    <tr>
+                      <td x-text="item.product_name || item.name"></td>
+                      <td x-text="item.quantity"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeModal()">Cerrar</button>
+            <button type="button" class="btn btn-success" @click="markReturnedFromModal()">Marcar como Devuelto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Modal de Confirmación Personalizado -->
+  <template x-if="showConfirmDialog">
+    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered modal-sm animate__animated animate__zoomIn">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" x-text="confirmDialog.title || 'Confirmación'"></h5>
+            <button type="button" class="btn-close" @click="showConfirmDialog = false"></button>
+          </div>
+          <div class="modal-body">
+            <p x-text="confirmDialog.message" class="mb-0"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showConfirmDialog = false">Cancelar</button>
+            <button type="button" class="btn btn-danger" @click="confirmDialog.confirm()" x-text="confirmDialog.confirmText || 'Confirmar'"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+<script src="js/app.js"></script>
+<script src="js/secure-session.js"></script>
+<script>
+function dashboard(){ return {
+  role: (localStorage.getItem('role') || 'encargado'), 
+  userName: (localStorage.getItem('userName') || ''), 
+  pending:[], 
+  low:[], 
+  out:[],
+  searchProduct: '',
+  showAllPending: false,
+  showModal: false, 
+  requestDetails: null, 
+  notifications: [], 
+  showConfirmDialog: false, 
+  confirmDialog: {},
+  
+  get filteredPending() {
+    if (!this.searchProduct.trim()) {
+      return this.pending;
+    }
+    const searchTerm = this.searchProduct.toLowerCase();
+    return this.pending.filter(request => {
+      // Buscar en nombre de solicitante
+      if (request.solicitante && request.solicitante.toLowerCase().includes(searchTerm)) {
+        return true;
+      }
+      // Buscar en el campo product (concatenado del backend)
+      if (request.product && request.product.toLowerCase().includes(searchTerm)) {
+        return true;
+      }
+      return false;
+    });
+  },
+  
+  get visibleCount() {
+    return this.showAllPending ? this.filteredPending.length : Math.min(5, this.filteredPending.length);
+  },
+  
+  toggleShowAll() {
+    this.showAllPending = !this.showAllPending;
+    console.log('Toggle - showAllPending:', this.showAllPending, '| Total:', this.filteredPending.length, '| Visible:', this.visibleCount);
+  },
+  
+  showNotification(message, type = 'info', title = '') {
+    this.notifications.push({ message, type, title });
+    setTimeout(() => this.notifications.shift(), 4000);
+  },
+  async init(){
+    try {
+      const r = await apiFetch('/dashboard/summary','GET');
+      if(r.ok){
+        this.pending = (r.data.pending || []).map(p => {
+          if (p.return_date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const returnDate = new Date(p.return_date);
+            returnDate.setHours(0, 0, 0, 0);
+            p.overdue = returnDate < today;
+          } else {
+            p.overdue = false;
+          }
+          return p;
+        });
+        
+        this.low = r.data.low || [];
+        this.out = r.data.out || [];
+        this.role = r.data.role || 'encargado';
+        this.userName = (r.data.user && r.data.user.name) ? r.data.user.name : (this.userName || '');
+        if(this.userName) localStorage.setItem('userName', this.userName);
+        if(this.role) localStorage.setItem('role', this.role);
+      } else {
+        const errorMsg = r.data?.error || r.data?.message || 'No se puede conectar al servidor';
+        this.showNotification(errorMsg, 'danger', 'Error al cargar');
+      }
+    } catch(e) {
+      this.showNotification('Error inesperado: ' + e.message, 'danger', 'Error');
+    }
+  },
+  logout(){ 
+    // Llamar a la función mejorada de logout que invalida la sesión en el servidor
+    window.logout();
+  },
+  async markReturned(id){
+    this.confirmDialog = {
+      title: '¿Marcar como devuelto?',
+      message: '¿Estás seguro de que deseas marcar esta solicitud como devuelta?',
+      confirmText: 'Sí, marcar como devuelto',
+      confirm: async () => {
+        try {
+          const r = await apiFetch('/requests/' + id + '/return', 'POST');
+          if(r.ok) {
+            this.showNotification('Solicitud marcada como devuelta', 'success', '✓ Éxito');
+            this.showConfirmDialog = false;
+            this.init();
+          } else {
+            this.showNotification(r.data?.message || 'Error al actualizar', 'danger', 'Error');
+          }
+        } catch(e) {
+          this.showNotification('Error: ' + e.message, 'danger', 'Error');
+        }
+      }
+    };
+    this.showConfirmDialog = true;
+  },
+  async viewDetails(id){
+    try {
+      const r = await apiFetch('/requests/' + id, 'GET');
+      if(r.ok){
+        this.requestDetails = r.data;
+        this.showModal = true;
+      } else {
+        this.showNotification('No se pudieron cargar los detalles', 'danger', 'Error');
+      }
+    } catch(e) {
+      this.showNotification('Error al cargar detalles: ' + e.message, 'danger', 'Error');
+    }
+  },
+  closeModal(){
+    this.showModal = false;
+    this.requestDetails = null;
+  },
+  async markReturnedFromModal(){
+    if(!this.requestDetails?.id) return;
+    this.confirmDialog = {
+      title: '¿Marcar como devuelto?',
+      message: '¿Estás seguro de que deseas marcar esta solicitud como devuelta?',
+      confirmText: 'Sí, marcar como devuelto',
+      confirm: async () => {
+        try {
+          const r = await apiFetch('/requests/' + this.requestDetails.id + '/return', 'POST');
+          if(r.ok) {
+            this.showNotification('Solicitud marcada como devuelta', 'success', '✓ Éxito');
+            this.showConfirmDialog = false;
+            this.closeModal();
+            this.init();
+          } else {
+            this.showNotification(r.data?.message || 'Error al actualizar', 'danger', 'Error');
+          }
+        } catch(e) {
+          this.showNotification('Error: ' + e.message, 'danger', 'Error');
+        }
+      }
+    };
+    this.showConfirmDialog = true;
+  },
+  translateType(type){
+    const types = {
+      'prestamo': 'Préstamo',
+      'salida': 'Salida',
+      'devolucion': 'Devolución'
+    };
+    return types[type] || type;
+  },
+  translateStatus(status){
+    const statuses = {
+      'pendiente': 'Pendiente',
+      'activa': 'Aprobada',
+      'aprobada': 'Aprobada',
+      'devuelta': 'Devuelta',
+      'cancelada': 'Cancelada'
+    };
+    return statuses[status] || status;
+  },
+  viewLowStock(){
+    window.location = 'products.html?filter=low';
+  },
+  viewOutOfStock(){
+    window.location = 'products.html?filter=out';
+  }
+};}
+</script>
+
+<!-- Cargar footer externo -->
+<div x-data="{ footer: '' }" x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
+  <div x-html="footer"></div>
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Si es un archivo que existe, sírvelo
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Si es un directorio que existe, sírvelo
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Las rutas /api/* van a Laravel (index.php)
+    RewriteCond %{REQUEST_URI} ^/api [L]
+    RewriteRule ^ index.php [L]
+
+    # Todo lo demás va al frontend
+    RewriteRule ^ frontend/index.html [L]
+</IfModule>
