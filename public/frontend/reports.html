@@ -1,15 +1,17 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <!-- Meta tags para prevenir caché del navegador -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+
   <!-- VALIDACIÓN CRÍTICA: Verificar sesión ANTES de renderizar HTML -->
   <script>
-  if (!localStorage.getItem('token')) {
-    window.location.replace('index.html');
-  }
+    if (!localStorage.getItem('token')) {
+      window.location.replace('index.html');
+    }
   </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -18,9 +20,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
   <link href="css/exact-style.css" rel="stylesheet">
+  <link href="css/modales.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
+
 <body x-data="reportsPage()" x-init="validateSessionWithServer(); load(); 
   $watch('filterUser', () => requestsPage = 1);
   $watch('filterSolicitante', () => requestsPage = 1);
@@ -28,14 +32,16 @@
   $watch('filterDateEnd', () => requestsPage = 1);
   $watch('filterType', () => requestsPage = 1)">
   <!-- Cargar header externo -->
-  <div x-data="{ header: '' }" x-init="fetch('./Template/header.html').then(r => r.text()).then(html => { header = html })">
+  <div x-data="{ header: '' }"
+    x-init="fetch('./Template/header.html').then(r => r.text()).then(html => { header = html })">
     <div x-html="header"></div>
   </div>
 
   <div class="container-fluid">
     <div class="row">
       <div class="col-2">
-        <div x-data="{ sidebar: '' }" x-init="fetch('./Template/sidebar.html').then(r => r.text()).then(html => { sidebar = html })">
+        <div x-data="{ sidebar: '' }"
+          x-init="fetch('./Template/sidebar.html').then(r => r.text()).then(html => { sidebar = html })">
           <div x-html="sidebar"></div>
         </div>
       </div>
@@ -43,18 +49,71 @@
       <div class="col-9">
         <div class="card-panel">
           <h3>Reportes</h3>
-          <div class="mb-3"><button class="btn me-2" :class="tab==='movements' ? 'btn-movimientos-active' : 'btn-movimientos'" @click="tab='movements'">Movimientos</button><button class="btn" :class="tab==='requests' ? 'btn-solicitudes-active' : 'btn-solicitudes'" @click="tab='requests'">Solicitudes</button></div>
+          <div class="mb-3"><button class="btn me-2"
+              :class="tab==='movements' ? 'btn-movimientos-active' : 'btn-movimientos'"
+              @click="tab='movements'">Movimientos</button><button class="btn"
+              :class="tab==='requests' ? 'btn-solicitudes-active' : 'btn-solicitudes'"
+              @click="tab='requests'">Solicitudes</button></div>
 
           <div x-show="tab=='movements'">
-            <div class="d-flex justify-content-between"><h5>Movimientos</h5><div><button class="btn btn-outline-primary" @click="exportMovements()">Exportar PDF</button></div></div>
-            <table class="table table-soft"><thead><tr><th>#</th><th>Usuario</th><th>Acción</th><th>Detalles</th><th>Fecha</th></tr></thead>
-              <tbody><template x-for="(m, index) in movements" :key="m.id"><tr><td x-text="index + 1"></td><td x-text="m.user"></td><td x-text="translateAction(m.action)"></td><td x-text="m.details"></td><td x-text="m.created_at"></td></tr></template></tbody></table>
-            <div class="d-flex justify-content-between"><button class="btn" @click="prev()">Anterior</button><div>Página <span x-text="page"></span></div><button class="btn" @click="next()">Siguiente</button></div>
+            <div class="d-flex justify-content-between">
+              <h5>Movimientos</h5>
+              <div><button class="btn btn-outline-primary" @click="exportMovements()">Exportar PDF</button></div>
+            </div>
+
+
+            <!-- Filtros de búsqueda para Movimientos -->
+            <div class="row mb-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label">Fecha Inicio:</label>
+                <input type="date" class="form-control" x-model="filterMovDateStart" :max="today">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Fecha Fin:</label>
+                <input type="date" class="form-control" x-model="filterMovDateEnd" :max="today"
+                  :min="filterMovDateStart">
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-outline-secondary w-100" @click="clearMovementFilters()">Limpiar Filtros</button>
+              </div>
+            </div>
+
+
+            <table class="table table-soft">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Usuario</th>
+                  <th>Acción</th>
+                  <th>Detalles</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <template x-for="(m, index) in filteredMovements()" :key="m.id">
+                  <tr>
+                    <td x-text="index + 1"></td>
+                    <td x-text="m.user"></td>
+                    <td x-text="translateAction(m.action)"></td>
+                    <td x-text="m.details"></td>
+                    <td x-text="m.created_at"></td>
+                  </tr>
+                </template>
+              </tbody>
+
+            </table>
+            <div class="d-flex justify-content-between"><button class="btn" @click="prev()">Anterior</button>
+              <div>Página <span x-text="page"></span></div><button class="btn" @click="next()">Siguiente</button>
+            </div>
           </div>
 
           <div x-show="tab=='requests'">
-            <div class="d-flex justify-content-between"><h5>Solicitudes</h5><div><button class="btn btn-outline-primary" @click="exportRequests()">Exportar PDF</button></div></div>
-            
+            <div class="d-flex justify-content-between">
+              <h5>Solicitudes</h5>
+              <div><button class="btn btn-outline-primary" @click="exportRequests()">Exportar PDF</button></div>
+            </div>
+
             <!-- Filtros de búsqueda -->
             <div class="row mb-3 align-items-end">
               <div class="col-md-2">
@@ -68,7 +127,8 @@
               </div>
               <div class="col-md-2">
                 <label class="form-label">Buscar por Solicitante:</label>
-                <input type="text" class="form-control" x-model="filterSolicitante" placeholder="Buscar solicitante..." @input="filterSolicitante = filterSolicitante.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+                <input type="text" class="form-control" x-model="filterSolicitante" placeholder="Buscar solicitante..."
+                  @input="filterSolicitante = filterSolicitante.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
               </div>
               <div class="col-md-2">
                 <label class="form-label">Fecha Inicio:</label>
@@ -90,10 +150,41 @@
                 <button class="btn btn-outline-secondary w-100" @click="clearFilters()">Limpiar Filtros</button>
               </div>
             </div>
-            
-            <table class="table table-soft"><thead><tr><th>#</th><th>Usuario</th><th>Folio</th><th>Tipo</th><th>Solicitante</th><th>Fecha</th><th>Acción</th></tr></thead>
-              <tbody><template x-for="(r, index) in paginatedRequests()" :key="r.id"><tr><td x-text="index + 1"></td><td x-text="r.user"></td><td x-text="r.folio"></td><td x-text="r.type"></td><td x-text="r.solicitante"></td><td x-text="r.created_at"></td><td><a href="#" class="text-primary" @click.prevent="viewRequest(r)">Ver más...</a></td></tr></template></tbody></table>
-            <div class="d-flex justify-content-between"><button class="btn" @click="prevRequests()">Anterior</button><div>Página <span x-text="requestsPage"></span></div><button class="btn" @click="nextRequests()">Siguiente</button></div>
+
+            <table class="table table-soft">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Usuario</th>
+                  <th>Folio</th>
+                  <th>Tipo</th>
+                  <th>Solicitante</th>
+                  <th>Fecha</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody><template x-for="(r, index) in paginatedRequests()" :key="r.id">
+                  <tr>
+                    <td x-text="index + 1"></td>
+                    <td x-text="r.user"></td>
+                    <td x-text="r.folio"></td>
+                    <td x-text="r.type"></td>
+                    <td x-text="r.solicitante"></td>
+                    <td x-text="r.created_at"></td>
+                    <td>
+                      <a href="#" class="text-primary" @click.prevent="viewRequest(r)">Ver más...</a>
+                      <template x-if="r.type === 'prestamo' || r.type === 'salida'">
+                        <button class="btn btn-sm btn-outline-primary ms-2" @click="regenerateValePDF(r)">Regenerar
+                          Vale</button>
+                      </template>
+                    </td>
+                  </tr>
+                </template></tbody>
+            </table>
+            <div class="d-flex justify-content-between"><button class="btn" @click="prevRequests()">Anterior</button>
+              <div>Página <span x-text="requestsPage"></span></div><button class="btn"
+                @click="nextRequests()">Siguiente</button>
+            </div>
           </div>
 
         </div>
@@ -101,9 +192,15 @@
     </div>
   </div>
 
+
+
+
+
+
   <!-- Modal de Detalles de Solicitud -->
   <template x-if="showRequestModal">
-    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+    <div class="modal animate__animated animate__fadeIn" tabindex="-1"
+      style="display: block; background: rgba(0,0,0,0.5);">
       <div class="modal-dialog modal-dialog-centered modal-lg animate__animated animate__zoomIn">
         <div class="modal-content">
           <div class="modal-header">
@@ -112,25 +209,25 @@
           </div>
           <div class="modal-body">
             <div class="row mb-3">
-              <div class="col-md-6">
+              <div style="width:50%; float:left; padding: 0.5rem 0.75rem;">
                 <strong>Fecha de Solicitud:</strong>
                 <p x-text="selectedRequest?.created_at || 'No especificada'"></p>
               </div>
-              <div class="col-md-6">
+              <div style="width:50%; float:left; padding: 0.5rem 0.75rem;">
                 <strong>Folio:</strong>
                 <p x-text="selectedRequest?.folio"></p>
               </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-6">
+              <div style="width:50%; float:left; padding: 0.5rem 0.75rem; margin-top:0.5rem;">
                 <strong>Tipo:</strong>
                 <p x-text="translateType(selectedRequest?.type)"></p>
               </div>
-              <div class="col-md-6">
+              <div style="width:50%; float:left; padding: 0.5rem 0.75rem; margin-top:0.5rem;">
                 <strong>Usuario:</strong>
                 <p x-text="selectedRequest?.user"></p>
               </div>
+              <div style="clear:both;"></div>
             </div>
+
             <div class="mb-3">
               <strong>Estado:</strong>
               <select class="form-select" x-model="editForm.status" :disabled="!isEditing || role !== 'coordinador'">
@@ -142,11 +239,13 @@
             </div>
             <div class="mb-3">
               <strong>Solicitante:</strong>
-              <input type="text" class="form-control" x-model="editForm.solicitante" :disabled="!isEditing || role !== 'coordinador'">
+              <input type="text" class="form-control" x-model="editForm.solicitante"
+                :disabled="!isEditing || role !== 'coordinador'">
             </div>
             <div class="mb-3" x-show="selectedRequest?.return_date">
               <strong>Fecha de Devolución:</strong>
-              <input type="date" class="form-control" x-model="editForm.return_date" :disabled="!isEditing || role !== 'coordinador'" :min="today">
+              <input type="date" class="form-control" x-model="editForm.return_date"
+                :disabled="!isEditing || role !== 'coordinador'" :min="today">
             </div>
             <div class="mb-3" x-show="selectedRequest?.items && selectedRequest.items.length > 0">
               <strong>Productos:</strong>
@@ -163,7 +262,8 @@
                     <tr>
                       <td x-text="item.product_name || item.name"></td>
                       <td>
-                        <input type="number" class="form-control form-control-sm" x-model="item.quantity" min="1" :disabled="!isEditing || role !== 'coordinador'" style="width: 80px;">
+                        <input type="number" class="form-control form-control-sm" x-model="item.quantity" min="1"
+                          :disabled="!isEditing || role !== 'coordinador'" style="width: 80px;">
                       </td>
                       <td x-show="isEditing && role === 'coordinador'">
                         <button class="btn btn-sm btn-danger" @click="removeItem(index)">Eliminar</button>
@@ -172,7 +272,7 @@
                   </template>
                 </tbody>
               </table>
-              
+
               <!-- Agregar producto -->
               <div class="mt-3" x-show="isEditing && role === 'coordinador'">
                 <strong>Agregar Producto:</strong>
@@ -186,7 +286,8 @@
                     </select>
                   </div>
                   <div class="col-md-3">
-                    <input type="number" class="form-control form-control-sm" x-model="selectedProductQty" min="1" placeholder="Cantidad">
+                    <input type="number" class="form-control form-control-sm" x-model="selectedProductQty" min="1"
+                      placeholder="Cantidad">
                   </div>
                   <div class="col-md-3">
                     <button class="btn btn-sm btn-success" @click="addProduct()">Agregar</button>
@@ -209,393 +310,555 @@
     </div>
   </template>
 
+
+
+
+
+
+
+
+
   <script src="js/app.js"></script>
   <script src="js/secure-session.js"></script>
   <script>
-  function reportsPage(){
-    return {
-      role: (localStorage.getItem('role') || 'encargado'),
-      userName: (localStorage.getItem('userName') || ''),
-      tab:'movements', page:1, movements:[], reqs:[], 
-      requestsPage: 1,
-      showRequestModal: false, selectedRequest: null,
-      isEditing: false,
-      today: new Date().toISOString().split('T')[0],
-      editForm: { solicitante: '', return_date: '', items: [], status: 'pendiente' },
-      allProducts: [],
-      allUsers: [],
-      selectedProductId: '',
-      selectedProductQty: 1,
-      filterUser: '',
-      filterSolicitante: '',
-      filterDateStart: '',
-      filterDateEnd: '',
-      filterType: '',
-      
-      translateAction(action) {
-        const translations = {
-          'create_request': 'Realizó solicitud',
-          'edit_request': 'Editó solicitud',
-          'return_request': 'Recibió devolución',
-          'delete_request': 'Eliminó',
-          'create_product': 'Agregó producto',
-          'edit_product': 'Actualizó producto',
-          'update_product': 'Actualizó producto',
-          'delete_product': 'Eliminó producto',
-          'create_user': 'Registró usuario',
-          'edit_user': 'Modificó usuario',
-          'activate_user': 'Activó usuario',
-          'deactivate_user': 'Desactivó usuario',
-          'login': 'Inició sesión',
-          'logout': 'Cerró sesión'
-        };
-        return translations[action] || action;
-      },
-      
-      filteredRequests() {
-        let filtered = this.reqs;
-        
-        if (this.filterUser) {
-          filtered = filtered.filter(r => 
-            (r.user || '') === this.filterUser
-          );
-        }
-        
-        if (this.filterSolicitante) {
-          filtered = filtered.filter(r => 
-            (r.solicitante || '').toLowerCase().includes(this.filterSolicitante.toLowerCase())
-          );
-        }
-        
-        if (this.filterDateStart || this.filterDateEnd) {
-          filtered = filtered.filter(r => {
-            const requestDate = (r.created_at || '').split(' ')[0];
-            if (!requestDate) return false;
-            
-            const startMatch = !this.filterDateStart || requestDate >= this.filterDateStart;
-            const endMatch = !this.filterDateEnd || requestDate <= this.filterDateEnd;
-            
-            return startMatch && endMatch;
+    function reportsPage() {
+      return {
+        role: (localStorage.getItem('role') || 'encargado'),
+        userName: (localStorage.getItem('userName') || ''),
+        tab: 'movements', page: 1, movements: [], reqs: [],
+        requestsPage: 1,
+        showRequestModal: false, selectedRequest: null,
+        isEditing: false,
+        today: new Date().toISOString().split('T')[0],
+        editForm: { solicitante: '', return_date: '', items: [], status: 'pendiente' },
+        allProducts: [],
+        allUsers: [],
+        selectedProductId: '',
+        selectedProductQty: 1,
+        filterUser: '',
+        filterSolicitante: '',
+        filterDateStart: '',
+        filterDateEnd: '',
+        filterType: '',
+        filterMovDateStart: '',
+        filterMovDateEnd: '',
+
+        translateAction(action) {
+          const translations = {
+            'create_request': 'Realizó solicitud',
+            'edit_request': 'Editó solicitud',
+            'return_request': 'Recibió devolución',
+            'delete_request': 'Eliminó',
+            'create_product': 'Agregó producto',
+            'edit_product': 'Actualizó producto',
+            'update_product': 'Actualizó producto',
+            'delete_product': 'Eliminó producto',
+            'create_user': 'Registró usuario',
+            'edit_user': 'Modificó usuario',
+            'activate_user': 'Activó usuario',
+            'deactivate_user': 'Desactivó usuario',
+            'login': 'Inició sesión',
+            'logout': 'Cerró sesión'
+          };
+          return translations[action] || action;
+        },
+
+
+
+        filteredMovements() {
+          let filtered = this.movements;
+
+          if (this.filterMovDateStart || this.filterMovDateEnd) {
+            filtered = filtered.filter(m => {
+              const movDate = (m.created_at || '').split(' ')[0];
+              if (!movDate) return false;
+
+              const startMatch = !this.filterMovDateStart || movDate >= this.filterMovDateStart;
+              const endMatch = !this.filterMovDateEnd || movDate <= this.filterMovDateEnd;
+
+              return startMatch && endMatch;
+            });
+          }
+
+          return filtered;
+        },
+
+
+
+        filteredRequests() {
+          let filtered = this.reqs;
+
+          if (this.filterUser) {
+            filtered = filtered.filter(r =>
+              (r.user || '') === this.filterUser
+            );
+          }
+
+          if (this.filterSolicitante) {
+            filtered = filtered.filter(r =>
+              (r.solicitante || '').toLowerCase().includes(this.filterSolicitante.toLowerCase())
+            );
+          }
+
+          if (this.filterDateStart || this.filterDateEnd) {
+            filtered = filtered.filter(r => {
+              const requestDate = (r.created_at || '').split(' ')[0];
+              if (!requestDate) return false;
+
+              const startMatch = !this.filterDateStart || requestDate >= this.filterDateStart;
+              const endMatch = !this.filterDateEnd || requestDate <= this.filterDateEnd;
+
+              return startMatch && endMatch;
+            });
+          }
+
+          if (this.filterType) {
+            filtered = filtered.filter(r =>
+              (r.type || '').toLowerCase() === this.filterType.toLowerCase()
+            );
+          }
+
+          return filtered;
+        },
+
+        paginatedRequests() {
+          const start = (this.requestsPage - 1) * 30;
+          const end = start + 30;
+          return this.filteredRequests().slice(start, end);
+        },
+
+        async load() {
+          const r = await apiFetch('/movements?page=' + this.page, 'GET'); if (r.ok) this.movements = r.data.data || [];
+          const s = await apiFetch('/requests/history', 'GET'); if (s.ok) this.reqs = s.data || [];
+          const p = await apiFetch('/products', 'GET'); if (p.ok) this.allProducts = p.data || [];
+          const u = await apiFetch('/users', 'GET'); if (u.ok) this.allUsers = u.data || [];
+          try { const d = await apiFetch('/dashboard/summary', 'GET'); if (d.ok) { this.role = d.data.role || this.role; this.userName = d.data.user?.name || this.userName; if (this.userName) localStorage.setItem('userName', this.userName); if (this.role) localStorage.setItem('role', this.role); } } catch (e) { }
+        },
+        logout() { window.logout(); }, // Llamar a la función mejorada de logout que invalida la sesión en el servidor
+        clearFilters() {
+          this.filterUser = '';
+          this.filterSolicitante = '';
+          this.filterDateStart = '';
+          this.filterDateEnd = '';
+          this.filterType = '';
+          this.requestsPage = 1;
+        },
+
+        clearMovementFilters() {
+          this.filterMovDateStart = '';
+          this.filterMovDateEnd = '';
+        },
+        prev() { if (this.page > 1) { this.page--; this.load(); } },
+        next() { this.page++; this.load(); },
+        prevRequests() { if (this.requestsPage > 1) { this.requestsPage--; } },
+        nextRequests() { if (this.requestsPage * 30 < this.filteredRequests().length) { this.requestsPage++; } },
+        async viewRequest(req) {
+          // Cargar los detalles completos de la solicitud incluyendo items
+          const res = await apiFetch('/requests/' + req.id, 'GET');
+          if (res.ok) {
+            this.selectedRequest = res.data;
+            this.editForm = {
+              solicitante: res.data.solicitante,
+              return_date: res.data.return_date,
+              status: res.data.status || 'pendiente',
+              items: JSON.parse(JSON.stringify(res.data.items || []))
+            };
+            this.showRequestModal = true;
+          } else {
+            // Si no hay endpoint específico, usar los datos que ya tenemos
+            this.selectedRequest = req;
+            this.editForm = {
+              solicitante: req.solicitante,
+              return_date: req.return_date,
+              status: req.status || 'pendiente',
+              items: []
+            };
+            this.showRequestModal = true;
+          }
+        },
+        closeModal() {
+          this.showRequestModal = false;
+          this.isEditing = false;
+          this.editForm = { solicitante: '', return_date: '', items: [], status: 'pendiente' };
+          this.selectedProductId = '';
+          this.selectedProductQty = 1;
+        },
+        startEdit() {
+          this.isEditing = true;
+        },
+        removeItem(index) {
+          this.editForm.items.splice(index, 1);
+        },
+        addProduct() {
+          if (!this.selectedProductId) {
+            alert('Seleccione un producto');
+            return;
+          }
+          const product = this.allProducts.find(p => p.id == this.selectedProductId);
+          if (!product) return;
+
+          // Verificar si el producto ya está en la lista
+          const existing = this.editForm.items.find(i => i.product_id == this.selectedProductId);
+          if (existing) {
+            alert('Este producto ya está en la lista');
+            return;
+          }
+
+          this.editForm.items.push({
+            product_id: product.id,
+            product_name: product.name,
+            quantity: parseInt(this.selectedProductQty) || 1
           });
-        }
-        
-        if (this.filterType) {
-          filtered = filtered.filter(r => 
-            (r.type || '').toLowerCase() === this.filterType.toLowerCase()
-          );
-        }
-        
-        return filtered;
-      },
-      
-      paginatedRequests() {
-        const start = (this.requestsPage - 1) * 30;
-        const end = start + 30;
-        return this.filteredRequests().slice(start, end);
-      },
-      
-      async load(){
-        const r = await apiFetch('/movements?page='+this.page,'GET'); if(r.ok) this.movements = r.data.data || [];
-        const s = await apiFetch('/requests/history','GET'); if(s.ok) this.reqs = s.data || [];
-        const p = await apiFetch('/products','GET'); if(p.ok) this.allProducts = p.data || [];
-        const u = await apiFetch('/users','GET'); if(u.ok) this.allUsers = u.data || [];
-        try{ const d = await apiFetch('/dashboard/summary','GET'); if(d.ok){ this.role = d.data.role || this.role; this.userName = d.data.user?.name || this.userName; if(this.userName) localStorage.setItem('userName', this.userName); if(this.role) localStorage.setItem('role', this.role); } }catch(e){}
-      },
-      logout(){ window.logout(); }, // Llamar a la función mejorada de logout que invalida la sesión en el servidor
-      clearFilters() {
-        this.filterUser = '';
-        this.filterSolicitante = '';
-        this.filterDateStart = '';
-        this.filterDateEnd = '';
-        this.filterType = '';
-        this.requestsPage = 1;
-      },
-      prev(){ if(this.page>1){ this.page--; this.load(); } },
-      next(){ this.page++; this.load(); },
-      prevRequests(){ if(this.requestsPage>1){ this.requestsPage--; } },
-      nextRequests(){ if(this.requestsPage * 30 < this.filteredRequests().length){ this.requestsPage++; } },
-      async viewRequest(req) {
-        // Cargar los detalles completos de la solicitud incluyendo items
-        const res = await apiFetch('/requests/' + req.id, 'GET');
-        if (res.ok) {
-          this.selectedRequest = res.data;
-          this.editForm = {
-            solicitante: res.data.solicitante,
-            return_date: res.data.return_date,
-            status: res.data.status || 'pendiente',
-            items: JSON.parse(JSON.stringify(res.data.items || []))
+
+          this.selectedProductId = '';
+          this.selectedProductQty = 1;
+        },
+        async saveEdit() {
+          if (!this.selectedRequest?.id) return;
+
+          const payload = {
+            solicitante: this.editForm.solicitante,
+            return_date: this.editForm.return_date,
+            status: this.editForm.status,
+            items: this.editForm.items.map(item => ({
+              product_id: item.product_id || item.id,
+              quantity: parseInt(item.quantity)
+            }))
           };
-          this.showRequestModal = true;
-        } else {
-          // Si no hay endpoint específico, usar los datos que ya tenemos
-          this.selectedRequest = req;
-          this.editForm = {
-            solicitante: req.solicitante,
-            return_date: req.return_date,
-            status: req.status || 'pendiente',
-            items: []
+
+          const res = await apiFetch('/requests/' + this.selectedRequest.id, 'PUT', payload);
+          if (res.ok) {
+            alert('Solicitud actualizada exitosamente');
+            this.closeModal();
+            this.load(); // Recargar la lista
+          } else {
+            alert('Error al actualizar la solicitud: ' + (res.message || 'Error desconocido'));
+          }
+        },
+
+        async regenerateValePDF(req) {
+          // Obtener los datos completos de la solicitud desde la API
+          const res = await apiFetch('/requests/' + req.id, 'GET');
+          if (!res.ok) {
+            alert('Error al obtener los datos de la solicitud');
+            return;
+          }
+
+          const requestData = res.data;
+
+          // Generar el PDF con los datos obtenidos
+          this.generateValePDF(requestData);
+        },
+
+        generateValePDF(requestData) {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          const itemsPerHalfPage = 6;
+          const totalItems = requestData.items.length;
+
+          // Función para dibujar un vale
+          const drawVale = (yOffset, items, isFullPage = false) => {
+            const startY = yOffset;
+
+            // Logos (si están disponibles)
+            try {
+              doc.addImage('assets/logo1.png', 'PNG', 15, startY + 3, 25, 25);
+              doc.addImage('assets/logo2.png', 'PNG', 170, startY + 3, 25, 25);
+            } catch (e) {
+              console.log('No se pudieron cargar los logos');
+            }
+
+            // Título
+            doc.setFontSize(13);
+            doc.setFont(undefined, 'bold');
+            doc.text('VALE DE ' + (requestData.type === 'prestamo' ? 'PRÉSTAMO' : 'SALIDA').toUpperCase(), 105, startY + 26, { align: 'center' });
+
+            // Información básica
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.text('Folio: ' + (requestData.folio || 'N/A'), 20, startY + 38);
+            doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 120, startY + 38);
+
+            doc.text('Solicitante: ' + requestData.solicitante, 20, startY + 54);
+            doc.text('Entrega: ' + (requestData.user || this.userName), 120, startY + 54);
+            if (requestData.return_date) {
+              doc.text('Fecha de devolución: ' + requestData.return_date, 20, startY + 62);
+            }
+
+            // Tabla de productos
+            doc.setFont(undefined, 'bold');
+            doc.text('Productos:', 20, startY + 72);
+            doc.setFont(undefined, 'normal');
+
+            let tableY = startY + 80;
+            doc.setFontSize(8);
+
+            // Encabezados de tabla
+            doc.setFont(undefined, 'bold');
+            doc.text('Producto', 25, tableY);
+            doc.text('Cantidad', 150, tableY);
+            doc.line(20, tableY + 2, 190, tableY + 2);
+            doc.setFont(undefined, 'normal');
+
+            tableY += 7;
+
+            // Items (adaptado para API response: product_name en lugar de name)
+            items.forEach((item) => {
+              doc.text(item.product_name || item.name, 25, tableY);
+              doc.text(item.quantity.toString(), 150, tableY);
+              tableY += 5;
+            });
+
+            // Firmas
+            let signY;
+            if (isFullPage) {
+              // Firmas al final de la página completa
+              signY = 260;
+            } else {
+              // Firmas al final de la media página
+              signY = startY + 130;
+            }
+
+            doc.line(30, signY, 90, signY);
+            doc.line(120, signY, 180, signY);
+            doc.setFontSize(9);
+            doc.text('Firma del Solicitante', 45, signY + 5);
+            doc.text('Firma del Encargado', 135, signY + 5);
+
+            // Línea divisoria si es la primera copia en media página
+            if (yOffset === 0 && !isFullPage) {
+              doc.setLineDash([3, 3]);
+              doc.line(10, 148.5, 200, 148.5);
+              doc.setLineDash([]);
+            }
           };
-          this.showRequestModal = true;
-        }
-      },
-      closeModal() {
-        this.showRequestModal = false;
-        this.isEditing = false;
-        this.editForm = { solicitante: '', return_date: '', items: [], status: 'pendiente' };
-        this.selectedProductId = '';
-        this.selectedProductQty = 1;
-      },
-      startEdit() {
-        this.isEditing = true;
-      },
-      removeItem(index) {
-        this.editForm.items.splice(index, 1);
-      },
-      addProduct() {
-        if (!this.selectedProductId) {
-          alert('Seleccione un producto');
-          return;
-        }
-        const product = this.allProducts.find(p => p.id == this.selectedProductId);
-        if (!product) return;
-        
-        // Verificar si el producto ya está en la lista
-        const existing = this.editForm.items.find(i => i.product_id == this.selectedProductId);
-        if (existing) {
-          alert('Este producto ya está en la lista');
-          return;
-        }
-        
-        this.editForm.items.push({
-          product_id: product.id,
-          product_name: product.name,
-          quantity: parseInt(this.selectedProductQty) || 1
-        });
-        
-        this.selectedProductId = '';
-        this.selectedProductQty = 1;
-      },
-      async saveEdit() {
-        if (!this.selectedRequest?.id) return;
-        
-        const payload = {
-          solicitante: this.editForm.solicitante,
-          return_date: this.editForm.return_date,
-          status: this.editForm.status,
-          items: this.editForm.items.map(item => ({
-            product_id: item.product_id || item.id,
-            quantity: parseInt(item.quantity)
-          }))
-        };
-        
-        const res = await apiFetch('/requests/' + this.selectedRequest.id, 'PUT', payload);
-        if (res.ok) {
-          alert('Solicitud actualizada exitosamente');
-          this.closeModal();
-          this.load(); // Recargar la lista
-        } else {
-          alert('Error al actualizar la solicitud: ' + (res.message || 'Error desconocido'));
-        }
-      },
-      exportMovements() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        let currentPage = 1;
-        
-        const addHeader = () => {
-          // Logos
-          try {
-            doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
-            doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
-          } catch(e) {
-            console.log('No se pudieron cargar los logos');
-          }
-          
-          // Encabezado
-          doc.setFontSize(12);
-          doc.setFont(undefined, 'bold');
-          doc.text('UNIVERSIDAD AUT\u00d3NOMA DE CAMPECHE', 105, 15, { align: 'center' });
-          doc.text('FACULTAD DE INGENIER\u00cdA', 105, 22, { align: 'center' });
-          
-          doc.setFontSize(14);
-          doc.text('REPORTE DE MOVIMIENTOS', 105, 32, { align: 'center' });
-          
-          // Información
-          doc.setFontSize(9);
-          doc.setFont(undefined, 'normal');
-          doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
-          doc.text('P\u00e1gina de datos: ' + this.page, 165, 42);
-        };
-        
-        addHeader();
-        
-        // Tabla
-        let y = 50;
-        doc.setFontSize(8);
-        doc.setFont(undefined, 'bold');
-        doc.text('#', 15, y);
-        doc.text('Usuario', 25, y);
-        doc.text('Acci\u00f3n', 70, y);
-        doc.text('Detalles', 110, y);
-        doc.text('Fecha', 170, y);
-        doc.line(15, y + 2, 195, y + 2);
-        
-        y += 7;
-        doc.setFont(undefined, 'normal');
-        
-        this.movements.forEach((m, index) => {
-          if (y > 270) {
-            // Agregar número de página antes de cambiar
-            doc.setFontSize(8);
-            doc.text('P\u00e1gina ' + currentPage, 105, 287, { align: 'center' });
-            
+
+          // Si hay más de 6 productos, crear página completa para cada copia
+          if (totalItems > itemsPerHalfPage) {
+            // Primera copia - página completa
+            drawVale(0, requestData.items, true);
+
+            // Segunda copia - nueva página
             doc.addPage();
-            currentPage++;
-            addHeader();
-            y = 50;
-            
-            // Repetir encabezados de tabla
-            doc.setFontSize(8);
-            doc.setFont(undefined, 'bold');
-            doc.text('#', 15, y);
-            doc.text('Usuario', 25, y);
-            doc.text('Acci\u00f3n', 70, y);
-            doc.text('Detalles', 110, y);
-            doc.text('Fecha', 170, y);
-            doc.line(15, y + 2, 195, y + 2);
-            y += 7;
-            doc.setFont(undefined, 'normal');
-          }
-          doc.text((index + 1).toString(), 15, y);
-          doc.text((m.user || '').substring(0, 20), 25, y);
-          doc.text(this.translateAction(m.action).substring(0, 20), 70, y);
-          doc.text((m.details || '').substring(0, 30), 110, y);
-          doc.text((m.created_at || '').substring(0, 16), 170, y);
-          y += 6;
-        });
-        
-        // Agregar número de página en la última página
-        doc.setFontSize(8);
-        doc.text('P\u00e1gina ' + currentPage, 105, 287, { align: 'center' });
-        
-        doc.save('Movimientos_pagina_' + this.page + '.pdf');
-      },
-      exportRequests() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        let currentPage = 1;
-        
-        const addHeader = () => {
-          // Logos
-          try {
-            doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
-            doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
-          } catch(e) {
-            console.log('No se pudieron cargar los logos');
+            drawVale(0, requestData.items, true);
+          } else {
+            // Si hay 6 o menos productos, dividir en dos mitades (formato original)
+            drawVale(0, requestData.items, false);      // Primera copia en la mitad superior
+            drawVale(148.5, requestData.items, false);  // Segunda copia en la mitad inferior
           }
 
-          // Encabezado
-          doc.setFontSize(12);
+          // Guardar el PDF
+          window.open(doc.output('bloburl'), '_blank');
+        },
+
+
+
+        exportMovements() {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          let currentPage = 1;
+
+          const addHeader = () => {
+            // Logos
+            try {
+              doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
+              doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
+            } catch (e) {
+              console.log('No se pudieron cargar los logos');
+            }
+
+            // Encabezado
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('UNIVERSIDAD AUT\u00d3NOMA DE CAMPECHE', 105, 15, { align: 'center' });
+            doc.text('FACULTAD DE INGENIER\u00cdA', 105, 22, { align: 'center' });
+
+            doc.setFontSize(14);
+            doc.text('REPORTE DE MOVIMIENTOS', 105, 32, { align: 'center' });
+
+            // Información
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.text('Fecha de reporte: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
+            if (this.filterMovDateStart || this.filterMovDateEnd) {
+              const dateRange = (this.filterMovDateStart || 'Inicio') + ' a ' + (this.filterMovDateEnd || 'Hoy');
+              doc.text('Período: ' + dateRange, 15, 48);
+            }
+          };
+
+          addHeader();
+
+          // Tabla
+          let y = 50;
+          doc.setFontSize(8);
           doc.setFont(undefined, 'bold');
-          doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
-          doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
+          doc.text('#', 15, y);
+          doc.text('Usuario', 25, y);
+          doc.text('Acci\u00f3n', 70, y);
+          doc.text('Detalles', 110, y);
+          doc.text('Fecha', 170, y);
+          doc.line(15, y + 2, 195, y + 2);
 
-          doc.setFontSize(14);
-          doc.text('REPORTE DE SOLICITUDES', 105, 32, { align: 'center' });
-
-          // Información
-          doc.setFontSize(9);
+          y += 7;
           doc.setFont(undefined, 'normal');
-          doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
-          doc.text('Página de datos: ' + this.requestsPage, 165, 42);
-        };
-        
-        addHeader();
-        
-        // Tabla
-        let y = 50;
-        doc.setFontSize(8);
-        doc.setFont(undefined, 'bold');
-        doc.text('#', 15, y);
-        doc.text('Usuario', 25, y);
-        doc.text('Folio', 70, y);
-        doc.text('Tipo', 100, y);
-        doc.text('Solicitante', 130, y);
-        doc.text('Fecha', 170, y);
-        doc.line(15, y + 2, 195, y + 2);
-        
-        y += 7;
-        doc.setFont(undefined, 'normal');
-        
-        // Usar solo los registros paginados (30 por página)
-        this.paginatedRequests().forEach((r, index) => {
-          if (y > 270) {
-            // Agregar número de página antes de cambiar
-            doc.setFontSize(8);
-            doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
-            
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            y = 50;
-            
-            // Repetir encabezados de tabla
-            doc.setFontSize(8);
+
+          this.filteredMovements().forEach((m, index) => {
+            if (y > 270) {
+              // Agregar número de página antes de cambiar
+              doc.setFontSize(8);
+              doc.text('P\u00e1gina ' + currentPage, 105, 287, { align: 'center' });
+
+              doc.addPage();
+              currentPage++;
+              addHeader();
+              y = 50;
+
+              // Repetir encabezados de tabla
+              doc.setFontSize(8);
+              doc.setFont(undefined, 'bold');
+              doc.text('#', 15, y);
+              doc.text('Usuario', 25, y);
+              doc.text('Acci\u00f3n', 70, y);
+              doc.text('Detalles', 110, y);
+              doc.text('Fecha', 170, y);
+              doc.line(15, y + 2, 195, y + 2);
+              y += 7;
+              doc.setFont(undefined, 'normal');
+            }
+            doc.text((index + 1).toString(), 15, y);
+            doc.text((m.user || '').substring(0, 20), 25, y);
+            doc.text(this.translateAction(m.action).substring(0, 20), 70, y);
+            doc.text((m.details || '').substring(0, 30), 110, y);
+            doc.text((m.created_at || '').substring(0, 16), 170, y);
+            y += 6;
+          });
+
+          // Agregar número de página en la última página
+          doc.setFontSize(8);
+          doc.text('P\u00e1gina ' + currentPage, 105, 287, { align: 'center' });
+
+          // Abrir el PDF en nueva pestaña
+          window.open(doc.output('bloburl'), '_blank');
+        },
+        exportRequests() {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          let currentPage = 1;
+
+          const addHeader = () => {
+            // Logos
+            try {
+              doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
+              doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
+            } catch (e) {
+              console.log('No se pudieron cargar los logos');
+            }
+
+            // Encabezado
+            doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            doc.text('#', 15, y);
-            doc.text('Usuario', 25, y);
-            doc.text('Folio', 70, y);
-            doc.text('Tipo', 100, y);
-            doc.text('Solicitante', 130, y);
-            doc.text('Fecha', 170, y);
-            doc.line(15, y + 2, 195, y + 2);
-            y += 7;
+            doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
+            doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
+
+            doc.setFontSize(14);
+            doc.text('REPORTE DE SOLICITUDES', 105, 32, { align: 'center' });
+
+            // Información
+            doc.setFontSize(9);
             doc.setFont(undefined, 'normal');
-          }
-          // La numeración se reinicia en cada página (index + 1)
-          doc.text((index + 1).toString(), 15, y);
-          doc.text((r.user || '').substring(0, 20), 25, y);
-          doc.text((r.folio || '').substring(0, 15), 70, y);
-          doc.text((r.type || '').substring(0, 15), 100, y);
-          doc.text((r.solicitante || '').substring(0, 20), 130, y);
-          doc.text((r.created_at || '').substring(0, 16), 170, y);
-          y += 6;
-        });
-        
-        // Agregar número de página en la última página
-        doc.setFontSize(8);
-        doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
-        
-        doc.save('solicitudes_pagina_' + this.requestsPage + '.pdf');
-      },
-      translateType(type){
-        const types = {
-          'prestamo': 'Préstamo',
-          'salida': 'Salida',
-          'devolucion': 'Devolución'
-        };
-        return types[type] || type;
-      },
-      translateStatus(status){
-        const statuses = {
-          'pendiente': 'Pendiente',
-          'activa': 'Aprobada',
-          'aprobada': 'Aprobada',
-          'devuelta': 'Devuelta',
-          'cancelada': 'Cancelada'
-        };
-        return statuses[status] || status;
-      }
-    };
-  }
+            doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
+            doc.text('Página de datos: ' + this.requestsPage, 165, 42);
+          };
+
+          addHeader();
+
+          // Tabla
+          let y = 50;
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'bold');
+          doc.text('#', 15, y);
+          doc.text('Usuario', 25, y);
+          doc.text('Folio', 70, y);
+          doc.text('Tipo', 100, y);
+          doc.text('Solicitante', 130, y);
+          doc.text('Fecha', 170, y);
+          doc.line(15, y + 2, 195, y + 2);
+
+          y += 7;
+          doc.setFont(undefined, 'normal');
+
+          // Usar solo los registros paginados (30 por página)
+          this.paginatedRequests().forEach((r, index) => {
+            if (y > 270) {
+              // Agregar número de página antes de cambiar
+              doc.setFontSize(8);
+              doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
+
+              doc.addPage();
+              currentPage++;
+              addHeader();
+              y = 50;
+
+              // Repetir encabezados de tabla
+              doc.setFontSize(8);
+              doc.setFont(undefined, 'bold');
+              doc.text('#', 15, y);
+              doc.text('Usuario', 25, y);
+              doc.text('Folio', 70, y);
+              doc.text('Tipo', 100, y);
+              doc.text('Solicitante', 130, y);
+              doc.text('Fecha', 170, y);
+              doc.line(15, y + 2, 195, y + 2);
+              y += 7;
+              doc.setFont(undefined, 'normal');
+            }
+            // La numeración se reinicia en cada página (index + 1)
+            doc.text((index + 1).toString(), 15, y);
+            doc.text((r.user || '').substring(0, 20), 25, y);
+            doc.text((r.folio || '').substring(0, 15), 70, y);
+            doc.text((r.type || '').substring(0, 15), 100, y);
+            doc.text((r.solicitante || '').substring(0, 20), 130, y);
+            doc.text((r.created_at || '').substring(0, 16), 170, y);
+            y += 6;
+          });
+
+          // Agregar número de página en la última página
+          doc.setFontSize(8);
+          doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
+
+          // Abrir el PDF en nueva pestaña
+          window.open(doc.output('bloburl'), '_blank');
+        },
+        translateType(type) {
+          const types = {
+            'prestamo': 'Préstamo',
+            'salida': 'Salida',
+            'devolucion': 'Devolución'
+          };
+          return types[type] || type;
+        },
+        translateStatus(status) {
+          const statuses = {
+            'pendiente': 'Pendiente',
+            'activa': 'Aprobada',
+            'aprobada': 'Aprobada',
+            'devuelta': 'Devuelta',
+            'cancelada': 'Cancelada'
+          };
+          return statuses[status] || status;
+        }
+      };
+    }
   </script>
 
   <!-- Cargar footer externo -->
-  <div x-data="{ footer: '' }" x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
+  <div x-data="{ footer: '' }"
+    x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
     <div x-html="footer"></div>
   </div>
 
 </body>
+
 </html>

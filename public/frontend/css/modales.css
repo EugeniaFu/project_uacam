@@ -1,0 +1,346 @@
+/* =====================================================
+   MODAL BASE — Sistema de Gestión
+   Paleta: #071635 · #f2d300 · #f4f6f8 · #6c757d
+           #b00020 · #eef2f5 · #051028
+   Selectores con alta especificidad para ganar a Bootstrap
+   ===================================================== */
+
+:root {
+  --modal-navy:        #071635;
+  --modal-navy-deep:   #051028;
+  --modal-gold:        #f2d300;
+  --modal-surface:     #f4f6f8;
+  --modal-surface-alt: #eef2f5;
+  --modal-muted:       #6c757d;
+  --modal-danger:      #b00020;
+  --modal-white:       #ffffff;
+  --modal-border:      rgba(7, 22, 53, 0.15);
+  --modal-border-focus: rgba(7, 22, 53, 0.35);
+  --modal-radius:      12px;
+  --modal-radius-sm:   8px;
+  --modal-shadow:      0 12px 40px rgba(5, 16, 40, 0.22),
+                       0 3px 10px  rgba(5, 16, 40, 0.12);
+}
+
+/* ── Backdrop ──────────────────────────────────────── */
+.modal {
+  background: rgba(5, 16, 40, 0.55) !important;
+}
+
+/* ── Contenido ─────────────────────────────────────── */
+.modal .modal-content {
+  border: none !important;
+  border-left: 5px solid var(--modal-navy) !important;
+  border-radius: var(--modal-radius) !important;
+  box-shadow: var(--modal-shadow) !important;
+  overflow: hidden;
+}
+
+/* ── Header ────────────────────────────────────────── */
+.modal .modal-header {
+  background: var(--modal-navy) !important;
+  border-bottom: 3px solid var(--modal-gold) !important;
+  padding: 1rem 1.5rem !important;
+  border-radius: 0 !important;
+}
+
+.modal .modal-header .modal-title {
+  color: var(--modal-white) !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em;
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid var(--modal-gold);
+  display: inline-block;
+}
+
+.modal .modal-header .btn-close {
+  filter: invert(1) brightness(2) !important;
+  opacity: 0.75 !important;
+  transition: opacity 0.18s, transform 0.2s !important;
+}
+
+.modal .modal-header .btn-close:hover {
+  opacity: 1 !important;
+  transform: rotate(90deg) !important;
+}
+
+/* ── Body ──────────────────────────────────────────── */
+.modal .modal-body {
+  background: var(--modal-white) !important;
+  padding: 1.4rem 1.5rem !important;
+}
+
+/* Grupos info (row con col-md-6) */
+.modal .modal-body .row.mb-3 {
+  background: var(--modal-surface-alt) !important;
+  border-left: 4px solid var(--modal-navy) !important;
+  border-radius: var(--modal-radius-sm) !important;
+  padding: 0.85rem 0.75rem !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Etiquetas strong → label uppercase */
+.modal .modal-body strong {
+  display: block !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
+  color: var(--modal-muted) !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.modal .modal-body p {
+  color: var(--modal-navy) !important;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 0 !important;
+}
+
+/* ── Inputs y Selects ──────────────────────────────── */
+.modal .modal-body .form-control,
+.modal .modal-body .form-select {
+  border: 1.5px solid rgba(7, 22, 53, 0.3) !important;
+  border-radius: var(--modal-radius-sm) !important;
+  background-color: var(--modal-surface) !important;
+  color: var(--modal-navy) !important;
+  font-size: 0.875rem !important;
+  padding: 0.45rem 0.75rem !important;
+  transition: border-color 0.18s, box-shadow 0.18s, background-color 0.18s !important;
+  box-shadow: none !important;
+}
+
+.modal .modal-body .form-control:focus,
+.modal .modal-body .form-select:focus {
+  border-color: var(--modal-navy) !important;
+  background-color: var(--modal-white) !important;
+  box-shadow: 0 0 0 3px rgba(7, 22, 53, 0.12) !important;
+}
+
+.modal .modal-body .form-control:disabled,
+.modal .modal-body .form-select:disabled {
+  background-color: var(--modal-surface-alt) !important;
+  color: var(--modal-muted) !important;
+  border-color: rgba(7, 22, 53, 0.15) !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+/* ── Tabla de productos ────────────────────────────── */
+.modal .modal-body .table {
+  border-radius: var(--modal-radius-sm) !important;
+  overflow: hidden !important;
+  border: 1.5px solid rgba(7, 22, 53, 0.25) !important;
+  margin-bottom: 0 !important;
+}
+
+.modal .modal-body .table thead tr {
+  background-color: var(--modal-navy) !important;
+}
+
+.modal .modal-body .table thead th {
+  background-color: var(--modal-navy) !important;
+  color: var(--modal-white) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border: none !important;
+  padding: 0.6rem 0.9rem !important;
+}
+
+.modal .modal-body .table tbody tr {
+  border-bottom: 1px solid rgba(7, 22, 53, 0.1) !important;
+  transition: background-color 0.15s;
+}
+
+.modal .modal-body .table tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.modal .modal-body .table tbody tr:hover {
+  background-color: var(--modal-surface-alt) !important;
+}
+
+.modal .modal-body .table tbody td {
+  color: var(--modal-navy) !important;
+  font-size: 0.875rem !important;
+  padding: 0.55rem 0.9rem !important;
+  vertical-align: middle !important;
+  border: none !important;
+}
+
+/* Input numérico dentro de la tabla */
+.modal .modal-body .table .form-control-sm {
+  border: 1.5px solid rgba(7, 22, 53, 0.3) !important;
+  border-radius: 6px !important;
+  font-size: 0.83rem !important;
+  padding: 0.28rem 0.45rem !important;
+  background-color: var(--modal-white) !important;
+  color: var(--modal-navy) !important;
+  text-align: center;
+  box-shadow: none !important;
+}
+
+.modal .modal-body .table .form-control-sm:focus {
+  border-color: var(--modal-navy) !important;
+  box-shadow: 0 0 0 2px rgba(7, 22, 53, 0.12) !important;
+}
+
+.modal .modal-body .table .form-control-sm:disabled {
+  background-color: var(--modal-surface-alt) !important;
+  color: var(--modal-muted) !important;
+  opacity: 1 !important;
+}
+
+/* ── Botón Eliminar (tabla) ────────────────────────── */
+.modal .modal-body .btn-danger,
+.modal .modal-body .btn.btn-sm.btn-danger {
+  background: transparent !important;
+  color: var(--modal-danger) !important;
+  border: 1.5px solid var(--modal-danger) !important;
+  border-radius: 6px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  padding: 0.22rem 0.6rem !important;
+  transition: background 0.16s, color 0.16s, transform 0.16s !important;
+  box-shadow: none !important;
+}
+
+.modal .modal-body .btn-danger:hover,
+.modal .modal-body .btn.btn-sm.btn-danger:hover {
+  background: var(--modal-danger) !important;
+  color: var(--modal-white) !important;
+  transform: scale(1.04);
+}
+
+/* ── Sección "Agregar Producto" ────────────────────── */
+.modal .modal-body .form-select-sm {
+  border: 1.5px solid rgba(7, 22, 53, 0.3) !important;
+  border-radius: 6px !important;
+  background-color: var(--modal-surface) !important;
+  color: var(--modal-navy) !important;
+  font-size: 0.83rem !important;
+  box-shadow: none !important;
+}
+
+.modal .modal-body .form-select-sm:focus {
+  border-color: var(--modal-navy) !important;
+  box-shadow: 0 0 0 2px rgba(7, 22, 53, 0.12) !important;
+}
+
+.modal .modal-body .btn-success {
+  background: var(--modal-navy) !important;
+  color: var(--modal-white) !important;
+  border: 2px solid var(--modal-navy) !important;
+  border-radius: 6px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.28rem 0.8rem !important;
+  box-shadow: none !important;
+  transition: background 0.16s, box-shadow 0.16s !important;
+}
+
+.modal .modal-body .btn-success:hover {
+  background: var(--modal-navy-deep) !important;
+  box-shadow: 0 3px 10px rgba(5, 16, 40, 0.22) !important;
+}
+
+/* ── Footer ────────────────────────────────────────── */
+.modal .modal-footer {
+  background: var(--modal-surface-alt) !important;
+  border-top: 1.5px solid rgba(7, 22, 53, 0.15) !important;
+  padding: 0.85rem 1.5rem !important;
+  gap: 0.5rem !important;
+  border-radius: 0 !important;
+}
+
+/* Botón Cerrar */
+.modal .modal-footer .btn-secondary {
+  background: transparent !important;
+  color: var(--modal-muted) !important;
+  border: 1.5px solid rgba(7, 22, 53, 0.3) !important;
+  border-radius: var(--modal-radius-sm) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  padding: 0.45rem 1.1rem !important;
+  box-shadow: none !important;
+  transition: background 0.16s, color 0.16s, border-color 0.16s !important;
+}
+
+.modal .modal-footer .btn-secondary:hover {
+  background: var(--modal-surface) !important;
+  color: var(--modal-navy) !important;
+  border-color: var(--modal-navy) !important;
+}
+
+/* Botón Editar (primary) */
+.modal .modal-footer .btn-primary {
+  background: var(--modal-navy) !important;
+  color: var(--modal-white) !important;
+  border: 2px solid var(--modal-navy) !important;
+  border-radius: var(--modal-radius-sm) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  padding: 0.45rem 1.3rem !important;
+  box-shadow: none !important;
+  transition: background 0.16s, box-shadow 0.16s, transform 0.16s !important;
+}
+
+.modal .modal-footer .btn-primary:hover {
+  background: var(--modal-navy-deep) !important;
+  border-color: var(--modal-navy-deep) !important;
+  box-shadow: 0 4px 14px rgba(5, 16, 40, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+/* Botón Guardar Cambios (success → dorado) */
+.modal .modal-footer .btn-success {
+  background: var(--modal-gold) !important;
+  color: var(--modal-navy-deep) !important;
+  border: 2px solid var(--modal-gold) !important;
+  border-radius: var(--modal-radius-sm) !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  padding: 0.45rem 1.3rem !important;
+  box-shadow: none !important;
+  transition: filter 0.16s, transform 0.16s !important;
+}
+
+.modal .modal-footer .btn-success:hover {
+  filter: brightness(0.93) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Animaciones ───────────────────────────────────── */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalZoomIn {
+  from { opacity: 0; transform: scale(0.94) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);     }
+}
+
+.modal.animate__animated.animate__fadeIn {
+  animation: modalFadeIn 0.2s ease both !important;
+}
+
+.modal-dialog.animate__animated.animate__zoomIn {
+  animation: modalZoomIn 0.26s cubic-bezier(0.34, 1.38, 0.64, 1) both !important;
+}
+
+/* Fix columnas del contenedor info */
+.modal .modal-body .row.mb-3 {
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+.modal .modal-body .row.mb-3 > .col-6 {
+  flex: 0 0 50% !important;
+  max-width: 50% !important;
+  width: 50% !important;
+}

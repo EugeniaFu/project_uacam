@@ -1,15 +1,16 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
+
 <head>
-    <!-- Meta tags para prevenir caché del navegador -->
+    <!-- Meta tags para prevenir cachÃ© del navegador -->
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- VALIDACIÓN CRÍTICA: Verificar sesión ANTES de renderizar HTML -->
+    <!-- VALIDACIÃ“N CRÃTICA: Verificar sesiÃ³n ANTES de renderizar HTML -->
     <script>
-    if (!localStorage.getItem('token')) {
-      window.location.replace('index.html');
-    }
+        if (!localStorage.getItem('token')) {
+            window.location.replace('index.html');
+        }
     </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -20,6 +21,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/exact-style.css" rel="stylesheet">
+    <link href="css/modales.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -29,21 +31,23 @@
 
     <!-- Sistema de Notificaciones/Toasts -->
     <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
-      <template x-for="(toast, idx) in notifications" :key="idx">
-        <div class="alert" :class="'alert-' + toast.type" style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <strong x-show="toast.title" x-text="toast.title"></strong>
-              <p class="mb-0" x-text="toast.message"></p>
+        <template x-for="(toast, idx) in notifications" :key="idx">
+            <div class="alert" :class="'alert-' + toast.type"
+                style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong x-show="toast.title" x-text="toast.title"></strong>
+                        <p class="mb-0" x-text="toast.message"></p>
+                    </div>
+                    <button type="button" class="btn-close" @click="notifications.splice(idx, 1)"></button>
+                </div>
             </div>
-            <button type="button" class="btn-close" @click="notifications.splice(idx, 1)"></button>
-          </div>
-        </div>
-      </template>
+        </template>
     </div>
 
     <!-- Cargar header externo -->
-    <div x-data="{ header: '' }" x-init="fetch('./Template/header.html').then(r => r.text()).then(html => { header = html })">
+    <div x-data="{ header: '' }"
+        x-init="fetch('./Template/header.html').then(r => r.text()).then(html => { header = html })">
         <div x-html="header"></div>
     </div>
 
@@ -51,7 +55,8 @@
         <div class="row">
 
             <div class="col-2">
-                <div x-data="{ sidebar: '' }" x-init="fetch('./Template/sidebar.html').then(r => r.text()).then(html => { sidebar = html })">
+                <div x-data="{ sidebar: '' }"
+                    x-init="fetch('./Template/sidebar.html').then(r => r.text()).then(html => { sidebar = html })">
                     <div x-html="sidebar"></div>
                 </div>
             </div>
@@ -60,19 +65,28 @@
                 <div class="card-panel">
                     <div class="d-flex justify-content-between">
                         <h3>Productos</h3>
-                        <button class="btn btn-primary" @click="openNew()">Agregar producto</button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success" @click="modalAlta=true; itemsAlta=[]">
+                                <i class="bi bi-plus-circle"></i> Alta
+                            </button>
+                            <button class="btn btn-danger" @click="modalBaja=true; itemsBaja=[]">
+                                <i class="bi bi-dash-circle"></i> Baja
+                            </button>
+                            <button class="btn btn-primary" @click="openNew()">Agregar producto</button>
+                        </div>
                     </div>
 
                     <!-- Filtros -->
                     <div class="row mt-2 mb-2">
                         <div class="col-md-3">
                             <label class="form-label">Buscar por nombre o codigo</label>
-                            <input type="text" class="form-control" x-model="searchText" placeholder="Ingrese nombre o codigo del producto">
+                            <input type="text" class="form-control" x-model="searchText"
+                                placeholder="Ingrese nombre o codigo del producto">
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label">Filtrar por categoría</label>
+                            <label class="form-label">Filtrar por categorÃ­a</label>
                             <select class="form-select" x-model="filterCategory">
-                                <option value="">Todas las categorías</option>
+                                <option value="">Todas las categorÃ­as</option>
                                 <option value="low">Productos bajos en Stock</option>
                                 <option value="out">Productos Sin Stock</option>
                                 <template x-for="c in categories" :key="c.id">
@@ -89,12 +103,12 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Código</th>
+                                <th>CÃ³digo</th>
                                 <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Categoría</th>
+                                <th>DescripciÃ³n</th>
+                                <th>CategorÃ­a</th>
                                 <th>Stock</th>
-                                <th>Acción</th>
+                                <th>AcciÃ³n</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -107,8 +121,10 @@
                                     <td x-text="p.category_name"></td>
                                     <td x-text="p.quantity"></td>
                                     <td>
-                                        <button class="btn btn-sm btn-secondary" @click="edit(p)" title="Editar"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-sm btn-danger" @click="remove(p.id)" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                        <button class="btn btn-sm btn-secondary" @click="edit(p)" title="Editar"><i
+                                                class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger" @click="remove(p.id)" title="Eliminar"><i
+                                                class="bi bi-trash"></i></button>
                                     </td>
                                 </tr>
                             </template>
@@ -121,21 +137,24 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmación Personalizado -->
+    <!-- Modal de ConfirmaciÃ³n Personalizado -->
     <template x-if="showConfirmDialog">
-        <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal animate__animated animate__fadeIn" tabindex="-1"
+            style="display: block; background: rgba(0,0,0,0.5);">
             <div class="modal-dialog modal-dialog-centered modal-sm animate__animated animate__zoomIn">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" x-text="confirmDialog.title || 'Confirmación'"></h5>
+                        <h5 class="modal-title" x-text="confirmDialog.title || 'ConfirmaciÃ³n'"></h5>
                         <button type="button" class="btn-close" @click="showConfirmDialog = false"></button>
                     </div>
                     <div class="modal-body">
                         <p x-text="confirmDialog.message" class="mb-0"></p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @click="showConfirmDialog = false">Cancelar</button>
-                        <button type="button" class="btn btn-danger" @click="confirmDialog.confirm()" x-text="confirmDialog.confirmText || 'Confirmar'"></button>
+                        <button type="button" class="btn btn-secondary"
+                            @click="showConfirmDialog = false">Cancelar</button>
+                        <button type="button" class="btn btn-danger" @click="confirmDialog.confirm()"
+                            x-text="confirmDialog.confirmText || 'Confirmar'"></button>
                     </div>
                 </div>
             </div>
@@ -143,7 +162,8 @@
     </template>
 
     <!-- Modal para agregar/editar producto -->
-    <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modal}" tabindex="-1" style="background:rgba(0,0,0,0.5);" x-show="modal">
+    <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modal}" tabindex="-1"
+        style="background:rgba(0,0,0,0.5);" x-show="modal">
         <div class="modal-dialog animate__animated animate__zoomIn">
             <div class="modal-content">
                 <div class="modal-header">
@@ -157,13 +177,13 @@
                             <input type="text" class="form-control" x-model="form.name" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Descripción</label>
+                            <label class="form-label">DescripciÃ³n</label>
                             <textarea class="form-control" x-model="form.description" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Categoría</label>
+                            <label class="form-label">CategorÃ­a</label>
                             <select class="form-select" x-model="form.category_id" required>
-                                <option value="" disabled selected>Selecciona una categoría</option>
+                                <option value="" disabled selected>Selecciona una categorÃ­a</option>
                                 <template x-for="c in categories" :key="c.id">
                                     <option :value="c.id" x-text="c.name"></option>
                                 </template>
@@ -173,21 +193,25 @@
                             <label class="form-label">Tipo de Producto</label>
                             <select class="form-select" x-model="form.tipo" required>
                                 <option value="" disabled>Selecciona el tipo</option>
-                                <option value="Préstamo">Préstamo</option>
+                                <option value="PrÃ©stamo">PrÃ©stamo</option>
                                 <option value="Salida">Salida</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Cantidad</label>
                             <template x-if="!form.id">
-                                <input type="number" class="form-control" x-model.number="form.quantity" min="0" required>
+                                <input type="number" class="form-control" x-model.number="form.quantity" min="0"
+                                    required>
                             </template>
                             <div x-show="form.id">
                                 <div class="d-flex gap-2 align-items-center">
-                                    <input id="mainQuantity" type="number" class="form-control" x-model.number="form.quantity" min="0" required>
+                                    <input id="mainQuantity" type="number" class="form-control"
+                                        x-model.number="form.quantity" min="0" required>
                                     <div class="form-check form-switch" style="margin-bottom: 0; white-space: nowrap;">
-                                        <input class="form-check-input" type="checkbox" x-model="form.addQuantity" id="addQuantityCheck">
-                                        <label class="form-check-label" for="addQuantityCheck" style="margin-bottom: 0;">
+                                        <input class="form-check-input" type="checkbox" x-model="form.addQuantity"
+                                            id="addQuantityCheck">
+                                        <label class="form-check-label" for="addQuantityCheck"
+                                            style="margin-bottom: 0;">
                                             Agregar
                                         </label>
                                     </div>
@@ -195,14 +219,15 @@
 
                                 <!-- Ejemplo/resultado justo debajo del campo Cantidad -->
                                 <div class="mt-1" style="min-height:1.5rem;">
-                                    <small class="form-text text-success" x-show="form.addQuantity" x-html="'Nuevo total: ' + (originalQuantity || 0) + ' + ' + (form.quantity || 0) + ' = <strong>' + ((originalQuantity || 0) + (form.quantity || 0)) + '</strong>'"></small>
+                                    <small class="form-text text-success" x-show="form.addQuantity"
+                                        x-html="'Nuevo total: ' + (originalQuantity || 0) + ' + ' + (form.quantity || 0) + ' = <strong>' + ((originalQuantity || 0) + (form.quantity || 0)) + '</strong>'"></small>
                                 </div>
 
-                                
+
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Cantidad mínima</label>
+                            <label class="form-label">Cantidad mÃ­nima</label>
                             <input type="number" class="form-control" x-model="form.min_quantity" min="0" required>
                         </div>
                     </div>
@@ -214,6 +239,273 @@
             </div>
         </div>
     </div>
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Modal Alta Inventario -->
+    <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modalAlta}" tabindex="-1"
+        style="background:rgba(0,0,0,0.5);" x-show="modalAlta">
+        <div class="modal-dialog modal-xl animate__animated animate__zoomIn">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#1e3a5f; color:#fff;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> Alta masiva de inventario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @click="modalAlta=false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Columna izquierda -->
+                        <div class="col-xl-6">
+                            <div class="card border-primary mb-3">
+                                <div class="card-header text-white" style="background:#1e3a5f;">
+                                    <h6 class="mb-0"><i class="bi bi-plus-circle"></i> SelecciÃ³n y cantidad</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex gap-2 mb-2">
+                                        <select class="form-select" x-model="altaSelected">
+                                            <option value="">Selecciona un producto...</option>
+                                            <template x-for="p in products" :key="p.id">
+                                                <option :value="p.id" x-text="p.name + ' â€” Stock: ' + p.quantity">
+                                                </option>
+                                            </template>
+                                        </select>
+                                        <button type="button" class="btn btn-success" :disabled="!altaSelected"
+                                            @click="agregarItemAlta()">
+                                            <i class="bi bi-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                    <template x-if="altaSelectedProduct">
+                                        <div class="alert alert-info py-2 px-3 mb-2">
+                                            <small>
+                                                <strong x-text="altaSelectedProduct.name"></strong> &nbsp;|&nbsp;
+                                                CategorÃ­a: <span x-text="altaSelectedProduct.category_name"></span>
+                                                &nbsp;|&nbsp;
+                                                Stock actual: <span x-text="altaSelectedProduct.quantity"></span>
+                                            </small>
+                                        </div>
+                                    </template>
+                                    <label class="form-label">Cantidad a agregar</label>
+                                    <input type="number" class="form-control" x-model.number="altaCant" min="1">
+                                </div>
+                            </div>
+                            <div class="card border-primary">
+                                <div class="card-header text-white" style="background:#1e3a5f;">
+                                    <h6 class="mb-0"><i class="bi bi-chat-text"></i> Observaciones</h6>
+                                </div>
+                                <div class="card-body">
+                                    <textarea class="form-control" x-model="altaObservaciones" rows="2"
+                                        placeholder="Proveedor, factura, fecha de compra, etc."></textarea>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Columna derecha -->
+                        <div class="col-xl-6">
+                            <div class="card border-primary h-100">
+                                <div class="card-header text-white" style="background:#1e3a5f;">
+                                    <h6 class="mb-0"><i class="bi bi-list-check"></i> Productos a dar de alta</h6>
+                                </div>
+                                <div class="card-body">
+                                    <template x-if="itemsAlta.length === 0">
+                                        <p class="text-muted text-center mt-3">Agrega productos de la lista</p>
+                                    </template>
+                                    <template x-if="itemsAlta.length > 0">
+                                        <div>
+                                            <table class="table table-sm">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Producto</th>
+                                                        <th>Stock</th>
+                                                        <th>+Cant.</th>
+                                                        <th>Total</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template x-for="(it, i) in itemsAlta" :key="it.id">
+                                                        <tr>
+                                                            <td x-text="it.name"></td>
+                                                            <td><span class="badge"
+                                                                    :class="it.quantity===0?'bg-danger':'bg-secondary'"
+                                                                    x-text="it.quantity"></span></td>
+                                                            <td><input type="number"
+                                                                    class="form-control form-control-sm"
+                                                                    style="width:65px;" x-model.number="it.cant"
+                                                                    min="1"></td>
+                                                            <td><strong x-text="it.quantity + it.cant"></strong></td>
+                                                            <td><button class="btn btn-sm btn-outline-danger"
+                                                                    @click="itemsAlta.splice(i,1)"><i
+                                                                        class="bi bi-x"></i></button></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                            <div class="alert alert-success py-2 px-3 mt-2">
+                                                <small>
+                                                    <strong x-text="itemsAlta.length"></strong> producto(s) â€” Total
+                                                    piezas:
+                                                    <strong x-text="itemsAlta.reduce((a,i)=>a+i.cant,0)"></strong>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @click="modalAlta=false">Cancelar</button>
+                    <button type="button" class="btn btn-success" :disabled="itemsAlta.length === 0"
+                        @click="guardarAltaMasiva()">
+                        <i class="bi bi-plus-circle"></i> Confirmar alta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Modal Baja Inventario -->
+    <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modalBaja}" tabindex="-1"
+        style="background:rgba(0,0,0,0.5);" x-show="modalBaja">
+        <div class="modal-dialog modal-xl animate__animated animate__zoomIn">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#7f1d1d; color:#fff;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-dash-circle"></i> Baja masiva de inventario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @click="modalBaja=false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Esta acciÃ³n reducirÃ¡ el stock. Ãšsala solo para corregir cantidades ingresadas por error.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-xl-6">
+                            <div class="card border-danger mb-3">
+                                <div class="card-header text-white" style="background:#7f1d1d;">
+                                    <h6 class="mb-0"><i class="bi bi-dash-circle"></i> SelecciÃ³n y cantidad</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex gap-2 mb-2">
+                                        <select class="form-select" x-model="bajaSelected">
+                                            <option value="">Selecciona un producto...</option>
+                                            <template x-for="p in products" :key="p.id">
+                                                <option :value="p.id" x-text="p.name + ' â€” Stock: ' + p.quantity">
+                                                </option>
+                                            </template>
+                                        </select>
+                                        <button type="button" class="btn btn-danger" :disabled="!bajaSelected"
+                                            @click="agregarItemBaja()">
+                                            <i class="bi bi-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                    <template x-if="bajaSelectedProduct">
+                                        <div class="alert alert-danger py-2 px-3 mb-2">
+                                            <small>
+                                                <strong x-text="bajaSelectedProduct.name"></strong> &nbsp;|&nbsp;
+                                                Stock actual: <span x-text="bajaSelectedProduct.quantity"></span>
+                                            </small>
+                                        </div>
+                                    </template>
+                                    <label class="form-label">Cantidad a restar</label>
+                                    <input type="number" class="form-control" x-model.number="bajaCant" min="1">
+                                </div>
+                            </div>
+                            <div class="card border-danger">
+                                <div class="card-header text-white" style="background:#7f1d1d;">
+                                    <h6 class="mb-0"><i class="bi bi-chat-text"></i> Motivo de baja</h6>
+                                </div>
+                                <div class="card-body">
+                                    <select class="form-select mb-2" x-model="bajaMotivo">
+                                        <option value="">Selecciona un motivo...</option>
+                                        <option>Registro errÃ³neo</option>
+                                        <option>PÃ©rdida / extravÃ­o</option>
+                                        <option>DaÃ±o / deterioro</option>
+                                        <option>Otro</option>
+                                    </select>
+                                    <textarea class="form-control" x-model="bajaObservaciones" rows="2"
+                                        placeholder="Observaciones adicionales..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-6">
+                            <div class="card border-danger h-100">
+                                <div class="card-header text-white" style="background:#7f1d1d;">
+                                    <h6 class="mb-0"><i class="bi bi-list-check"></i> Productos a dar de baja</h6>
+                                </div>
+                                <div class="card-body">
+                                    <template x-if="itemsBaja.length === 0">
+                                        <p class="text-muted text-center mt-3">Agrega productos de la lista</p>
+                                    </template>
+                                    <template x-if="itemsBaja.length > 0">
+                                        <table class="table table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Stock actual</th>
+                                                    <th>-Cant.</th>
+                                                    <th>QuedarÃ¡</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="(it, i) in itemsBaja" :key="it.id">
+                                                    <tr>
+                                                        <td x-text="it.name"></td>
+                                                        <td><span class="badge bg-secondary"
+                                                                x-text="it.quantity"></span></td>
+                                                        <td><input type="number" class="form-control form-control-sm"
+                                                                style="width:65px;" x-model.number="it.cant"
+                                                                :max="it.quantity" min="1"></td>
+                                                        <td>
+                                                            <span class="badge"
+                                                                :class="(it.quantity - it.cant) <= 0 ? 'bg-danger' : 'bg-success'"
+                                                                x-text="it.quantity - it.cant"></span>
+                                                        </td>
+                                                        <td><button class="btn btn-sm btn-outline-danger"
+                                                                @click="itemsBaja.splice(i,1)"><i
+                                                                    class="bi bi-x"></i></button></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @click="modalBaja=false">Cancelar</button>
+                    <button type="button" class="btn btn-danger" :disabled="itemsBaja.length === 0"
+                        @click="guardarBajaMasiva()">
+                        <i class="bi bi-dash-circle"></i> Confirmar baja
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    
+<!-- /////////////////////////////// -->
+<!-- /////////////////////////////// -->
+<!-- /////////////////////////////// -->
+<!-- js  -->
+
 
     <script src="js/app.js"></script>
     <script src="js/secure-session.js"></script>
@@ -233,6 +525,117 @@
                 notifications: [],
                 showConfirmDialog: false,
                 confirmDialog: {},
+                // === ALTA / BAJA INVENTARIO (nuevo) ===
+                modalAlta: false,
+                altaSelected: '',
+                altaCant: 1,
+                altaObservaciones: '',
+                itemsAlta: [],
+
+                modalBaja: false,
+                bajaSelected: '',
+                bajaCant: 1,
+                bajaMotivo: '',
+                itemsBaja: [],
+
+                // Computed
+                get altaSelectedProduct() {
+                    return this.products.find(p => p.id == this.altaSelected) || null;
+                },
+                get bajaSelectedProduct() {
+                    return this.products.find(p => p.id == this.bajaSelected) || null;
+                },
+
+                // MÃ©todos
+                agregarItemAlta() {
+                    const prod = this.products.find(p => p.id == this.altaSelected);
+                    if (!prod) return;
+
+                    const cant = Number(this.altaCant) || 1;
+                    if (cant < 1) return;
+
+                    const existing = this.itemsAlta.find(i => i.id === prod.id);
+                    if (existing) existing.cant += cant;
+                    else this.itemsAlta.push({ ...prod, cant });
+
+                    this.altaSelected = '';
+                    this.altaCant = 1;
+                },
+
+                agregarItemBaja() {
+                    const prod = this.products.find(p => p.id == this.bajaSelected);
+                    if (!prod) return;
+
+                    const cant = Number(this.bajaCant) || 1;
+                    if (cant < 1) return;
+
+                    if (cant > prod.quantity) {
+                        this.showNotification(
+                            'La cantidad a restar supera el stock actual (' + prod.quantity + ')',
+                            'warning',
+                            'ValidaciÃ³n'
+                        );
+                        return;
+                    }
+
+                    const existing = this.itemsBaja.find(i => i.id === prod.id);
+                    if (existing) existing.cant = Math.min(existing.cant + cant, prod.quantity);
+                    else this.itemsBaja.push({ ...prod, cant });
+
+                    this.bajaSelected = '';
+                    this.bajaCant = 1;
+                },
+
+                async guardarAltaMasiva() {
+                    try {
+                        for (const it of this.itemsAlta) {
+                            await apiFetch('/products/' + it.id, 'PUT', {
+                                ...it,
+                                quantity: (it.quantity || 0) + (it.cant || 0),
+                                addQuantity: false,
+                                altaObservaciones: this.altaObservaciones,
+                            });
+                        }
+                        this.showNotification(
+                            'Alta masiva completada: ' + this.itemsAlta.length + ' producto(s) actualizado(s)',
+                            'success',
+                            'âœ“ Ã‰xito'
+                        );
+                        this.modalAlta = false;
+                        this.itemsAlta = [];
+                        this.altaObservaciones = '';
+                        await this.load();
+                    } catch (e) {
+                        this.showNotification('Error en alta masiva: ' + e.message, 'danger', 'Error');
+                    }
+                },
+
+                async guardarBajaMasiva() {
+                    try {
+                        for (const it of this.itemsBaja) {
+                            const nueva = Math.max((it.quantity || 0) - (it.cant || 0), 0);
+                            await apiFetch('/products/' + it.id, 'PUT', {
+                                ...it,
+                                quantity: nueva,
+                                addQuantity: false,
+                                altaObservaciones: this.altaObservaciones,
+                            });
+                        }
+                        this.showNotification(
+                            'Baja masiva completada: ' + this.itemsBaja.length + ' producto(s) actualizado(s)',
+                            'success',
+                            'âœ“ Ã‰xito'
+                        );
+                        this.modalBaja = false;
+                        this.itemsBaja = [];
+                        this.bajaMotivo = '';
+                        this.bajaObservaciones = '';
+                        await this.load();
+                    } catch (e) {
+                        this.showNotification('Error en baja masiva: ' + e.message, 'danger', 'Error');
+                    }
+                },
+
                 showNotification(message, type = 'info', title = '') {
                     this.notifications.push({ message, type, title });
                     setTimeout(() => this.notifications.shift(), 4000);
@@ -250,8 +653,8 @@
                     }
                     if (this.searchText.trim()) {
                         const search = this.searchText.toLowerCase();
-                        filtered = filtered.filter(p => 
-                            p.name.toLowerCase().includes(search) || 
+                        filtered = filtered.filter(p =>
+                            p.name.toLowerCase().includes(search) ||
                             (p.codigo && p.codigo.toString().includes(search))
                         );
                     }
@@ -263,14 +666,14 @@
                         if (r.ok) this.products = r.data;
                         const c = await apiFetch('/categories', 'GET');
                         if (c.ok) this.categories = c.data;
-                        
-                        // Verificar parámetro de filtro en la URL
+
+                        // Verificar parÃ¡metro de filtro en la URL
                         const urlParams = new URLSearchParams(window.location.search);
                         const filter = urlParams.get('filter');
                         if (filter) {
                             this.filterCategory = filter;
                         }
-                        
+
                         try {
                             const s = await apiFetch('/dashboard/summary', 'GET');
                             if (s.ok) {
@@ -279,17 +682,17 @@
                                 if (this.userName) localStorage.setItem('userName', this.userName);
                                 if (this.role) localStorage.setItem('role', this.role);
                             }
-                        } catch (e) {}
-                    } catch(e) {
+                        } catch (e) { }
+                    } catch (e) {
                         this.showNotification('Error al cargar productos: ' + e.message, 'danger', 'Error');
                     }
                 },
                 logout() {
-                    // Llamar a la función mejorada de logout que invalida la sesión en el servidor
+                    // Llamar a la funciÃ³n mejorada de logout que invalida la sesiÃ³n en el servidor
                     window.logout();
                 },
                 openNew() {
-                    this.form = { min_quantity: 5, tipo: 'Préstamo' };
+                    this.form = { min_quantity: 5, tipo: 'PrÃ©stamo' };
                     this.modal = true;
                 },
                 edit(p) {
@@ -299,18 +702,18 @@
                     this.modal = true;
                 },
                 async save() {
-                    if(!this.form.name || !this.form.description || !this.form.category_id) {
-                        this.showNotification('Por favor completa todos los campos requeridos', 'warning', 'Validación');
+                    if (!this.form.name || !this.form.description || !this.form.category_id) {
+                        this.showNotification('Por favor completa todos los campos requeridos', 'warning', 'ValidaciÃ³n');
                         return;
                     }
                     try {
                         let dataToSave = Object.assign({}, this.form);
-                        
+
                         // If editing and "Agregar" checkbox is checked, sum quantities
                         if (this.form.id && this.form.addQuantity) {
                             dataToSave.quantity = this.originalQuantity + (this.form.quantity || 0);
                         }
-                        
+
                         let r;
                         if (this.form.id)
                             r = await apiFetch('/products/' + this.form.id, 'PUT', dataToSave);
@@ -318,33 +721,33 @@
                             r = await apiFetch('/products', 'POST', dataToSave);
                         if (r.ok) {
                             const msg = this.form.id ? 'Producto actualizado' : 'Producto creado exitosamente';
-                            this.showNotification(msg, 'success', '✓ Éxito');
+                            this.showNotification(msg, 'success', 'âœ“ Ã‰xito');
                             this.modal = false;
                             this.load();
                         } else {
-                            const msg = (r.data && (r.data.message || JSON.stringify(r.data.errors||r.data))) || 'Error al guardar';
+                            const msg = (r.data && (r.data.message || JSON.stringify(r.data.errors || r.data))) || 'Error al guardar';
                             this.showNotification(msg, 'danger', 'Error');
                         }
-                    } catch(e) {
+                    } catch (e) {
                         this.showNotification('Error: ' + e.message, 'danger', 'Error');
                     }
                 },
                 async remove(id) {
                     this.confirmDialog = {
-                        title: '¿Eliminar producto?',
-                        message: '¿Estás seguro de que deseas eliminar este producto?',
-                        confirmText: 'Sí, eliminar',
+                        title: 'Â¿Eliminar producto?',
+                        message: 'Â¿EstÃ¡s seguro de que deseas eliminar este producto?',
+                        confirmText: 'SÃ­, eliminar',
                         confirm: async () => {
                             try {
                                 const r = await apiFetch('/products/' + id, 'DELETE');
-                                if(r.ok) {
-                                    this.showNotification('Producto eliminado correctamente', 'success', '✓ Éxito');
+                                if (r.ok) {
+                                    this.showNotification('Producto eliminado correctamente', 'success', 'âœ“ Ã‰xito');
                                     this.showConfirmDialog = false;
                                     this.load();
                                 } else {
                                     this.showNotification(r.data?.message || 'Error al eliminar', 'danger', 'Error');
                                 }
-                            } catch(e) {
+                            } catch (e) {
                                 this.showNotification('Error: ' + e.message, 'danger', 'Error');
                             }
                         }
@@ -355,29 +758,29 @@
                     try {
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
-                        
+
                         // Logos
                         try {
                             doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
                             doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
-                        } catch(e) {
+                        } catch (e) {
                             console.log('No se pudieron cargar los logos');
                         }
-                        
+
                         // Encabezado
                         doc.setFontSize(12);
                         doc.setFont(undefined, 'bold');
-                        doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
-                        doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
-                        
+                        doc.text('UNIVERSIDAD AUTÃ“NOMA DE CAMPECHE', 105, 15, { align: 'center' });
+                        doc.text('FACULTAD DE INGENIERÃA', 105, 22, { align: 'center' });
+
                         doc.setFontSize(14);
                         doc.text('REPORTE DE PRODUCTOS', 105, 32, { align: 'center' });
-                        
-                        // Información
+
+                        // InformaciÃ³n
                         doc.setFontSize(9);
                         doc.setFont(undefined, 'normal');
                         doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
-                        
+
                         // Filtro aplicado
                         let filterText = 'Filtro: Todos los productos';
                         if (this.filterCategory === 'low') {
@@ -386,56 +789,56 @@
                             filterText = 'Filtro: Productos Sin Stock';
                         } else if (this.filterCategory) {
                             const cat = this.categories.find(c => c.id == this.filterCategory);
-                            if (cat) filterText = 'Filtro: Categoría ' + cat.name;
+                            if (cat) filterText = 'Filtro: CategorÃ­a ' + cat.name;
                         }
-                        if (this.searchText) filterText += ' - Búsqueda: ' + this.searchText;
+                        if (this.searchText) filterText += ' - BÃºsqueda: ' + this.searchText;
                         doc.text(filterText, 15, 50);
-                        
+
                         // Tabla
                         let y = 60;
                         doc.setFontSize(8);
                         doc.setFont(undefined, 'bold');
                         doc.text('#', 15, y);
-                        doc.text('Código', 25, y);
+                        doc.text('CÃ³digo', 25, y);
                         doc.text('Nombre', 50, y);
-                        doc.text('Categoría', 110, y);
+                        doc.text('CategorÃ­a', 110, y);
                         doc.text('Stock', 150, y);
-                        doc.text('Mín.', 170, y);
+                        doc.text('MÃ­n.', 170, y);
                         doc.line(15, y + 2, 195, y + 2);
-                        
+
                         y += 7;
                         doc.setFont(undefined, 'normal');
-                        
+
                         this.filteredProducts.forEach((p, index) => {
                             if (y > 270) {
                                 doc.setFontSize(8);
-                                doc.text('Página ' + Math.ceil((index) / 25), 105, 287, { align: 'center' });
-                                
+                                doc.text('PÃ¡gina ' + Math.ceil((index) / 25), 105, 287, { align: 'center' });
+
                                 doc.addPage();
-                                
-                                // Repetir encabezado en nueva página
+
+                                // Repetir encabezado en nueva pÃ¡gina
                                 try {
                                     doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
                                     doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
-                                } catch(e) {}
-                                
+                                } catch (e) { }
+
                                 doc.setFontSize(12);
                                 doc.setFont(undefined, 'bold');
-                                doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
-                                doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
-                                
+                                doc.text('UNIVERSIDAD AUTÃ“NOMA DE CAMPECHE', 105, 15, { align: 'center' });
+                                doc.text('FACULTAD DE INGENIERÃA', 105, 22, { align: 'center' });
+
                                 doc.setFontSize(14);
                                 doc.text('REPORTE DE PRODUCTOS', 105, 32, { align: 'center' });
-                                
+
                                 y = 50;
                                 doc.setFontSize(8);
                                 doc.setFont(undefined, 'bold');
                                 doc.text('#', 15, y);
-                                doc.text('Código', 25, y);
+                                doc.text('CÃ³digo', 25, y);
                                 doc.text('Nombre', 50, y);
-                                doc.text('Categoría', 110, y);
+                                doc.text('CategorÃ­a', 110, y);
                                 doc.text('Stock', 150, y);
-                                doc.text('Mín.', 170, y);
+                                doc.text('MÃ­n.', 170, y);
                                 doc.line(15, y + 2, 195, y + 2);
                                 y += 7;
                                 doc.setFont(undefined, 'normal');
@@ -448,14 +851,14 @@
                             doc.text((p.min_quantity || 0).toString(), 170, y);
                             y += 6;
                         });
-                        
+
                         doc.setFontSize(8);
-                        doc.text('Página 1', 105, 287, { align: 'center' });
-                        
+                        doc.text('PÃ¡gina 1', 105, 287, { align: 'center' });
+
                         const filename = 'Productos_' + new Date().toISOString().split('T')[0] + '.pdf';
                         doc.save(filename);
-                        this.showNotification('PDF exportado correctamente: ' + filename, 'success', '✓ Éxito');
-                    } catch(e) {
+                        this.showNotification('PDF exportado correctamente: ' + filename, 'success', 'âœ“ Ã‰xito');
+                    } catch (e) {
                         this.showNotification('Error al exportar PDF: ' + e.message, 'danger', 'Error');
                         console.error('Error exportPDF:', e);
                     }
@@ -465,10 +868,33 @@
     </script>
 
     <!-- Cargar footer externo -->
-    <div x-data="{ footer: '' }" x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
+    <div x-data="{ footer: '' }"
+        x-init="fetch('./Template/footer.html').then(r => r.text()).then(html => { footer = html })">
         <div x-html="footer"></div>
     </div>
 
-</body>
-</html>
 
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+</body>
+
+</html>
