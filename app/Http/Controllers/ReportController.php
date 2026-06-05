@@ -7,19 +7,33 @@ use Barryvdh\DomPDF\Facades\Pdf;
 class ReportController extends Controller {
     public function movementsPdf(Request $r){
         $validated = $r->validate([
-            'page' => 'sometimes|integer|min:1'
+            'page' => 'sometimes|integer|min:1',
+            'only_inventory' => 'sometimes|boolean'
         ]);
         
         $page = $validated['page'] ?? 1;
+        $onlyInventory = (bool)($validated['only_inventory'] ?? false);
         $per = 30;
         $offset = ($page - 1) * $per;
-        
+
+        $where = '';
+        $params = [];
+        if ($onlyInventory) {
+            $where = "WHERE m.action IN ('inventory_alta','inventory_baja')";
+        }
+
         $rows = DB::select(
-            'SELECT m.*, u.name as user FROM movements m LEFT JOIN users u ON u.id=m.user_id ORDER BY m.created_at DESC LIMIT ? OFFSET ?',
-            [$per, $offset]
+            "SELECT m.*, u.name as user, p.name as product_name
+             FROM movements m
+             LEFT JOIN users u ON u.id=m.user_id
+             LEFT JOIN products p ON p.id=m.product_id
+             $where
+             ORDER BY m.created_at DESC
+             LIMIT ? OFFSET ?",
+            array_merge($params, [$per, $offset])
         );
         
-        $pdf = Pdf::loadView('reports.movements', ['rows' => $rows, 'page' => $page]);
+        $pdf = Pdf::loadView('movements', ['rows' => $rows, 'page' => $page, 'onlyInventory' => $onlyInventory]);
         return $pdf->download('movimientos_page_' . $page . '.pdf');
     }
     
@@ -27,7 +41,7 @@ class ReportController extends Controller {
         $rows = DB::select(
             'SELECT r.*, u.name as user FROM requests r LEFT JOIN users u ON u.id=r.user_id ORDER BY r.created_at DESC'
         );
-        $pdf = Pdf::loadView('reports.requests', ['rows' => $rows]);
+        $pdf = Pdf::loadView('requests', ['rows' => $rows]);
         return $pdf->download('solicitudes.pdf');
     }
 }

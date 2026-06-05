@@ -1,5 +1,6 @@
-﻿<?php
+<?php
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class ProductController extends Controller {
                     'min_quantity' => $p->min_quantity,
                     'tipo' => $p->tipo
                 ];
-            })
+            })->values()->all()
         );
     }
     
@@ -59,38 +60,35 @@ class ProductController extends Controller {
             'quantity' => 'sometimes|integer|min:0',
             'min_quantity' => 'sometimes|integer|min:0',
             'tipo' => 'sometimes|in:Préstamo,Salida',
-
-            // Meta de inventario (para historial)
             'altaObservaciones' => 'nullable|string|max:1000',
-            'bajaMotivo' => 'nullable|string|max:255'
+            'bajaMotivo' => 'nullable|string|max:255',
+            'bajaObservaciones' => 'nullable|string|max:1000'
         ]);
 
         $altaObs = $validated['altaObservaciones'] ?? null;
         $bajaMotivo = $validated['bajaMotivo'] ?? null;
-
-        // No intentes guardar estos campos en products
-        $updateData = Arr::except($validated, ['altaObservaciones', 'bajaMotivo']);
-
+        $bajaObs = $validated['bajaObservaciones'] ?? null;
+        $updateData = Arr::except($validated, ['altaObservaciones', 'bajaMotivo', 'bajaObservaciones']);
         $p->update($updateData);
-
         $afterQty = $p->quantity;
         $delta = $afterQty - $beforeQty;
 
-        // Si cambió el stock, registrar como alta/baja de inventario
-        if ($delta !== 0 && Schema::hasColumn('movements', 'delta')) {
+        if ($delta !== 0 && Schema::hasColumn('movements', 'quantity_change')) {
             $action = $delta > 0 ? 'inventory_alta' : 'inventory_baja';
+            $inventoryType = $delta > 0 ? 'alta' : 'baja';
             $details = ($delta > 0 ? 'Alta' : 'Baja') . ' inventario: ' . $p->name . ' (' . $beforeQty . ' -> ' . $afterQty . ')';
-
             DB::table('movements')->insert([
                 'user_id' => $r->user()->id ?? null,
                 'product_id' => $p->id,
                 'action' => $action,
                 'details' => $details,
-                'delta' => $delta,
-                'before_quantity' => $beforeQty,
-                'after_quantity' => $afterQty,
-                'alta_observaciones' => $altaObs,
-                'baja_motivo' => $bajaMotivo,
+                'inventory_type' => $inventoryType,
+                'quantity_change' => $delta,
+                'quantity_before' => $beforeQty,
+                'quantity_after' => $afterQty,
+                'alta_observaciones' => $delta > 0 ? $altaObs : null,
+                'baja_motivo' => $delta < 0 ? $bajaMotivo : null,
+                'baja_observaciones' => $delta < 0 ? $bajaObs : null,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
@@ -103,7 +101,6 @@ class ProductController extends Controller {
                 'updated_at' => now()
             ]);
         }
-
         return response()->json($p);
     }
     
@@ -111,7 +108,6 @@ class ProductController extends Controller {
         $p = Product::findOrFail($id);
         $productName = $p->name;
         $p->delete();
-        
         DB::table('movements')->insert([
             'user_id' => $r->user()->id ?? null,
             'action' => 'delete_product',
@@ -119,11 +115,6 @@ class ProductController extends Controller {
             'created_at' => now(),
             'updated_at' => now()
         ]);
-        
         return response()->json(['deleted' => true]);
     }
 }
-
-
-
-

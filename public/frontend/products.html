@@ -2,11 +2,11 @@
 <html lang="es">
 
 <head>
-    <!-- Meta tags para prevenir cachÃ© del navegador -->
+    <!-- Meta tags para prevenir caché del navegador -->
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- VALIDACIÃ“N CRÃTICA: Verificar sesiÃ³n ANTES de renderizar HTML -->
+    <!-- VALIDACIÓN CRÍTICA: Verificar sesión ANTES de renderizar HTML -->
     <script>
         if (!localStorage.getItem('token')) {
             window.location.replace('index.html');
@@ -79,14 +79,14 @@
                     <!-- Filtros -->
                     <div class="row mt-2 mb-2">
                         <div class="col-md-3">
-                            <label class="form-label">Buscar por nombre o codigo</label>
+                            <label class="form-label">Buscar por nombre o código</label>
                             <input type="text" class="form-control" x-model="searchText"
-                                placeholder="Ingrese nombre o codigo del producto">
+                                placeholder="Ingrese nombre o código del producto">
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label">Filtrar por categorÃ­a</label>
+                            <label class="form-label">Filtrar por categoría</label>
                             <select class="form-select" x-model="filterCategory">
-                                <option value="">Todas las categorÃ­as</option>
+                                <option value="">Todas las categorías</option>
                                 <option value="low">Productos bajos en Stock</option>
                                 <option value="out">Productos Sin Stock</option>
                                 <template x-for="c in categories" :key="c.id">
@@ -103,12 +103,12 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>CÃ³digo</th>
+                                <th>Código</th>
                                 <th>Nombre</th>
-                                <th>DescripciÃ³n</th>
-                                <th>CategorÃ­a</th>
+                                <th>Descripción</th>
+                                <th>Categoría</th>
                                 <th>Stock</th>
-                                <th>AcciÃ³n</th>
+                                <th>Acción</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,14 +137,14 @@
         </div>
     </div>
 
-    <!-- Modal de ConfirmaciÃ³n Personalizado -->
+    <!-- Modal de Confirmación Personalizado -->
     <template x-if="showConfirmDialog">
         <div class="modal animate__animated animate__fadeIn" tabindex="-1"
             style="display: block; background: rgba(0,0,0,0.5);">
             <div class="modal-dialog modal-dialog-centered modal-sm animate__animated animate__zoomIn">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" x-text="confirmDialog.title || 'ConfirmaciÃ³n'"></h5>
+                        <h5 class="modal-title" x-text="confirmDialog.title || 'Confirmación'"></h5>
                         <button type="button" class="btn-close" @click="showConfirmDialog = false"></button>
                     </div>
                     <div class="modal-body">
@@ -177,13 +177,13 @@
                             <input type="text" class="form-control" x-model="form.name" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">DescripciÃ³n</label>
+                            <label class="form-label">Descripción</label>
                             <textarea class="form-control" x-model="form.description" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">CategorÃ­a</label>
+                            <label class="form-label">Categoría</label>
                             <select class="form-select" x-model="form.category_id" required>
-                                <option value="" disabled selected>Selecciona una categorÃ­a</option>
+                                <option value="" disabled selected>Selecciona una categoría</option>
                                 <template x-for="c in categories" :key="c.id">
                                     <option :value="c.id" x-text="c.name"></option>
                                 </template>
@@ -193,7 +193,7 @@
                             <label class="form-label">Tipo de Producto</label>
                             <select class="form-select" x-model="form.tipo" required>
                                 <option value="" disabled>Selecciona el tipo</option>
-                                <option value="PrÃ©stamo">PrÃ©stamo</option>
+                                <option value="Préstamo">Préstamo</option>
                                 <option value="Salida">Salida</option>
                             </select>
                         </div>
@@ -227,7 +227,7 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Cantidad mÃ­nima</label>
+                            <label class="form-label">Cantidad mínima</label>
                             <input type="number" class="form-control" x-model="form.min_quantity" min="0" required>
                         </div>
                     </div>
@@ -257,112 +257,191 @@
             <div class="modal-content">
                 <div class="modal-header" style="background:#1e3a5f; color:#fff;">
                     <h5 class="modal-title">
-                        <i class="bi bi-plus-circle"></i> Alta masiva de inventario
+                        <i class="bi bi-plus-circle"></i> Alta de Inventario
                     </h5>
                     <button type="button" class="btn-close btn-close-white" @click="modalAlta=false"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <!-- Columna izquierda -->
-                        <div class="col-xl-6">
-                            <div class="card border-primary mb-3">
+
+                        <!-- IZQUIERDA -->
+                        <div class="col-lg-5">
+
+                            <!-- Selección -->
+                            <div class="card border-primary mb-3 shadow-sm">
                                 <div class="card-header text-white" style="background:#1e3a5f;">
-                                    <h6 class="mb-0"><i class="bi bi-plus-circle"></i> SelecciÃ³n y cantidad</h6>
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Selección y cantidad
+                                    </h6>
                                 </div>
+
                                 <div class="card-body">
-                                    <div class="d-flex gap-2 mb-2">
+
+                                    <div class="d-flex gap-2 mb-3">
                                         <select class="form-select" x-model="altaSelected">
                                             <option value="">Selecciona un producto...</option>
+
                                             <template x-for="p in products" :key="p.id">
-                                                <option :value="p.id" x-text="p.name + ' â€” Stock: ' + p.quantity">
+                                                <option :value="p.id" x-text="p.name">
                                                 </option>
                                             </template>
                                         </select>
+
                                         <button type="button" class="btn btn-success" :disabled="!altaSelected"
                                             @click="agregarItemAlta()">
-                                            <i class="bi bi-plus"></i> Agregar
+
+                                            <i class="bi bi-plus"></i>
+                                            Agregar
                                         </button>
                                     </div>
+
                                     <template x-if="altaSelectedProduct">
-                                        <div class="alert alert-info py-2 px-3 mb-2">
+                                        <div class="alert alert-info py-2 px-3">
                                             <small>
-                                                <strong x-text="altaSelectedProduct.name"></strong> &nbsp;|&nbsp;
-                                                CategorÃ­a: <span x-text="altaSelectedProduct.category_name"></span>
-                                                &nbsp;|&nbsp;
-                                                Stock actual: <span x-text="altaSelectedProduct.quantity"></span>
+                                                <strong x-text="altaSelectedProduct.name"></strong>
+                                                |
+                                                Categoría:
+                                                <span x-text="altaSelectedProduct.category_name"></span>
+                                                |
+                                                Stock actual:
+                                                <span x-text="altaSelectedProduct.quantity"></span>
                                             </small>
                                         </div>
                                     </template>
-                                    <label class="form-label">Cantidad a agregar</label>
-                                    <input type="number" class="form-control" x-model.number="altaCant" min="1">
+
+                                    <label class="form-label fw-bold">
+                                        Cantidad a agregar
+                                    </label>
+
+                                    <input type="number" min="1" class="form-control" x-model.number="altaCant">
                                 </div>
                             </div>
-                            <div class="card border-primary">
+
+                            <!-- Observaciones -->
+                            <div class="card border-primary shadow-sm">
                                 <div class="card-header text-white" style="background:#1e3a5f;">
-                                    <h6 class="mb-0"><i class="bi bi-chat-text"></i> Observaciones</h6>
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-chat-text"></i>
+                                        Observaciones
+                                    </h6>
                                 </div>
+
                                 <div class="card-body">
-                                    <textarea class="form-control" x-model="altaObservaciones" rows="2"
-                                        placeholder="Proveedor, factura, fecha de compra, etc."></textarea>
-                                    
+
+                                    <textarea class="form-control" rows="6" x-model="altaObservaciones"
+                                        placeholder="Proveedor, factura, fecha de compra, lote, comentarios, etc.">
+                                    </textarea>
+
                                 </div>
                             </div>
+
                         </div>
-                        <!-- Columna derecha -->
-                        <div class="col-xl-6">
-                            <div class="card border-primary h-100">
+
+                        <!-- DERECHA -->
+                        <div class="col-lg-7">
+
+                            <div class="card border-primary shadow-sm h-100">
+
                                 <div class="card-header text-white" style="background:#1e3a5f;">
-                                    <h6 class="mb-0"><i class="bi bi-list-check"></i> Productos a dar de alta</h6>
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-list-check"></i>
+                                        Productos a dar de alta
+                                    </h6>
                                 </div>
+
                                 <div class="card-body">
+
                                     <template x-if="itemsAlta.length === 0">
-                                        <p class="text-muted text-center mt-3">Agrega productos de la lista</p>
+                                        <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                                            <i class="bi bi-box-seam fs-1 text-muted"></i>
+                                            <p class="text-muted mt-2 mb-0">
+                                                Agrega productos de la lista
+                                            </p>
+                                        </div>
                                     </template>
+
                                     <template x-if="itemsAlta.length > 0">
-                                        <div>
-                                            <table class="table table-sm">
+
+                                        <div class="table-responsive">
+
+                                            <table class="table table-hover align-middle">
+
                                                 <thead class="table-light">
                                                     <tr>
                                                         <th>Producto</th>
-                                                        <th>Stock</th>
-                                                        <th>+Cant.</th>
-                                                        <th>Total</th>
-                                                        <th></th>
+                                                        <th class="text-center">Stock</th>
+                                                        <th class="text-center">+ Cant.</th>
+                                                        <th class="text-center">Nuevo Total</th>
+                                                        <th width="60"></th>
                                                     </tr>
                                                 </thead>
+
                                                 <tbody>
+
                                                     <template x-for="(it, i) in itemsAlta" :key="it.id">
+
                                                         <tr>
-                                                            <td x-text="it.name"></td>
-                                                            <td><span class="badge"
-                                                                    :class="it.quantity===0?'bg-danger':'bg-secondary'"
-                                                                    x-text="it.quantity"></span></td>
-                                                            <td><input type="number"
-                                                                    class="form-control form-control-sm"
-                                                                    style="width:65px;" x-model.number="it.cant"
-                                                                    min="1"></td>
-                                                            <td><strong x-text="it.quantity + it.cant"></strong></td>
-                                                            <td><button class="btn btn-sm btn-outline-danger"
-                                                                    @click="itemsAlta.splice(i,1)"><i
-                                                                        class="bi bi-x"></i></button></td>
+
+                                                            <td>
+                                                                <strong x-text="it.name"></strong>
+                                                            </td>
+
+                                                            <td class="text-center">
+                                                                <span class="badge"
+                                                                    :class="it.quantity == 0 ? 'bg-danger' : 'bg-secondary'"
+                                                                    x-text="it.quantity">
+                                                                </span>
+                                                            </td>
+
+                                                            <td class="text-center">
+
+                                                                <input type="number" min="1"
+                                                                    class="form-control form-control-sm mx-auto"
+                                                                    style="width:90px" x-model.number="it.cant">
+
+                                                            </td>
+
+                                                            <td class="text-center">
+
+                                                                <strong class="text-success"
+                                                                    x-text="it.quantity + it.cant">
+                                                                </strong>
+
+                                                            </td>
+
+                                                            <td>
+
+                                                                <button class="btn btn-sm btn-outline-danger"
+                                                                    @click="itemsAlta.splice(i,1)">
+
+                                                                    <i class="bi bi-trash"></i>
+
+                                                                </button>
+
+                                                            </td>
+
                                                         </tr>
+
                                                     </template>
+
                                                 </tbody>
+
                                             </table>
-                                            <div class="alert alert-success py-2 px-3 mt-2">
-                                                <small>
-                                                    <strong x-text="itemsAlta.length"></strong> producto(s) â€” Total
-                                                    piezas:
-                                                    <strong x-text="itemsAlta.reduce((a,i)=>a+i.cant,0)"></strong>
-                                                </small>
-                                            </div>
+
                                         </div>
+
                                     </template>
+
                                 </div>
+
                             </div>
+
                         </div>
+
                     </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @click="modalAlta=false">Cancelar</button>
                     <button type="button" class="btn btn-success" :disabled="itemsAlta.length === 0"
@@ -383,27 +462,27 @@
             <div class="modal-content">
                 <div class="modal-header" style="background:#7f1d1d; color:#fff;">
                     <h5 class="modal-title">
-                        <i class="bi bi-dash-circle"></i> Baja masiva de inventario
+                        <i class="bi bi-dash-circle"></i> Baja de Inventario
                     </h5>
                     <button type="button" class="btn-close btn-close-white" @click="modalBaja=false"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning py-2">
                         <i class="bi bi-exclamation-triangle"></i>
-                        Esta acciÃ³n reducirÃ¡ el stock. Ãšsala solo para corregir cantidades ingresadas por error.
+                        Esta acción reducirá el stock. Úsela solo para corregir cantidades ingresadas por error.
                     </div>
                     <div class="row g-3">
                         <div class="col-xl-6">
                             <div class="card border-danger mb-3">
                                 <div class="card-header text-white" style="background:#7f1d1d;">
-                                    <h6 class="mb-0"><i class="bi bi-dash-circle"></i> SelecciÃ³n y cantidad</h6>
+                                    <h6 class="mb-0"><i class="bi bi-dash-circle"></i> Selección y cantidad</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="d-flex gap-2 mb-2">
                                         <select class="form-select" x-model="bajaSelected">
                                             <option value="">Selecciona un producto...</option>
                                             <template x-for="p in products" :key="p.id">
-                                                <option :value="p.id" x-text="p.name + ' â€” Stock: ' + p.quantity">
+                                                <option :value="p.id" x-text="p.name">
                                                 </option>
                                             </template>
                                         </select>
@@ -431,9 +510,9 @@
                                 <div class="card-body">
                                     <select class="form-select mb-2" x-model="bajaMotivo">
                                         <option value="">Selecciona un motivo...</option>
-                                        <option>Registro errÃ³neo</option>
-                                        <option>PÃ©rdida / extravÃ­o</option>
-                                        <option>DaÃ±o / deterioro</option>
+                                        <option>Registro erróneo</option>
+                                        <option>Pérdida / extravío</option>
+                                        <option>Daño / deterioro</option>
                                         <option>Otro</option>
                                     </select>
                                     <textarea class="form-control" x-model="bajaObservaciones" rows="2"
@@ -447,8 +526,13 @@
                                     <h6 class="mb-0"><i class="bi bi-list-check"></i> Productos a dar de baja</h6>
                                 </div>
                                 <div class="card-body">
-                                    <template x-if="itemsBaja.length === 0">
-                                        <p class="text-muted text-center mt-3">Agrega productos de la lista</p>
+                                    <template x-if="itemsAlta.length === 0">
+                                        <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                                            <i class="bi bi-box-seam fs-1 text-muted"></i>
+                                            <p class="text-muted mt-2 mb-0">
+                                                Agrega productos de la lista
+                                            </p>
+                                        </div>
                                     </template>
                                     <template x-if="itemsBaja.length > 0">
                                         <table class="table table-sm">
@@ -457,7 +541,7 @@
                                                     <th>Producto</th>
                                                     <th>Stock actual</th>
                                                     <th>-Cant.</th>
-                                                    <th>QuedarÃ¡</th>
+                                                    <th>Quedará</th>
                                                     <th></th>
                                                 </tr>
                                             </thead>
@@ -500,11 +584,11 @@
     </div>
 
 
-    
-<!-- /////////////////////////////// -->
-<!-- /////////////////////////////// -->
-<!-- /////////////////////////////// -->
-<!-- js  -->
+
+    <!-- /////////////////////////////// -->
+    <!-- /////////////////////////////// -->
+    <!-- /////////////////////////////// -->
+    <!-- js  -->
 
 
     <script src="js/app.js"></script>
@@ -536,6 +620,7 @@
                 bajaSelected: '',
                 bajaCant: 1,
                 bajaMotivo: '',
+                bajaObservaciones: '',
                 itemsBaja: [],
 
                 // Computed
@@ -546,7 +631,7 @@
                     return this.products.find(p => p.id == this.bajaSelected) || null;
                 },
 
-                // MÃ©todos
+                // Métodos
                 agregarItemAlta() {
                     const prod = this.products.find(p => p.id == this.altaSelected);
                     if (!prod) return;
@@ -573,7 +658,7 @@
                         this.showNotification(
                             'La cantidad a restar supera el stock actual (' + prod.quantity + ')',
                             'warning',
-                            'ValidaciÃ³n'
+                            'Validación'
                         );
                         return;
                     }
@@ -597,16 +682,28 @@
                             });
                         }
                         this.showNotification(
-                            'Alta masiva completada: ' + this.itemsAlta.length + ' producto(s) actualizado(s)',
+                            'Alta Completada: ' + this.itemsAlta.length + ' producto(s) actualizado(s)',
                             'success',
-                            'âœ“ Ã‰xito'
+                            '✓ Éxito'
                         );
                         this.modalAlta = false;
                         this.itemsAlta = [];
                         this.altaObservaciones = '';
                         await this.load();
+
+                        // Alerta con botón para abrir PDF
+                        this.confirmDialog = {
+                            title: 'PDF del historial',
+                            message: '¿Deseas abrir el PDF del historial de movimientos de inventario?',
+                            confirmText: 'Abrir PDF',
+                            confirm: async () => {
+                                this.showConfirmDialog = false;
+                                await this.abrirPdfInventario();
+                            }
+                        };
+                        this.showConfirmDialog = true;
                     } catch (e) {
-                        this.showNotification('Error en alta masiva: ' + e.message, 'danger', 'Error');
+                        this.showNotification('Error en alta: ' + e.message, 'danger', 'Error');
                     }
                 },
 
@@ -618,21 +715,61 @@
                                 ...it,
                                 quantity: nueva,
                                 addQuantity: false,
-                                altaObservaciones: this.altaObservaciones,
+                                bajaMotivo: this.bajaMotivo,
+                                bajaObservaciones: this.bajaObservaciones,
                             });
                         }
                         this.showNotification(
-                            'Baja masiva completada: ' + this.itemsBaja.length + ' producto(s) actualizado(s)',
+                            'Baja Completada: ' + this.itemsBaja.length + ' producto(s) actualizado(s)',
                             'success',
-                            'âœ“ Ã‰xito'
+                            'Éxito'
                         );
                         this.modalBaja = false;
                         this.itemsBaja = [];
                         this.bajaMotivo = '';
                         this.bajaObservaciones = '';
                         await this.load();
+
+                        // Alerta con botón para abrir PDF
+                        this.confirmDialog = {
+                            title: 'PDF del historial',
+                            message: '¿Deseas abrir el PDF del historial de movimientos de inventario?',
+                            confirmText: 'Abrir PDF',
+                            confirm: async () => {
+                                this.showConfirmDialog = false;
+                                await this.abrirPdfInventario();
+                            }
+                        };
+                        this.showConfirmDialog = true;
                     } catch (e) {
-                        this.showNotification('Error en baja masiva: ' + e.message, 'danger', 'Error');
+                        this.showNotification('Error en baja: ' + e.message, 'danger', 'Error');
+                    }
+                },
+
+                async abrirPdfInventario() {
+                    try {
+                        const token = localStorage.getItem('token') || '';
+                        const res = await fetch('/api/reports/movements?only_inventory=1', {
+                            method: 'GET',
+                            headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+                            credentials: 'include'
+                        });
+
+                        if (!res.ok) {
+                            const text = await res.text().catch(() => '');
+                            throw new Error('No se pudo generar el PDF (' + res.status + '). ' + (text || ''));
+                        }
+
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+
+                        // Abrir en nueva pestaña
+                        window.open(url, '_blank');
+
+                        // Liberar URL después de un rato (para no romper el PDF al abrir)
+                        setTimeout(() => URL.revokeObjectURL(url), 60000);
+                    } catch (e) {
+                        this.showNotification('Error al abrir PDF: ' + e.message, 'danger', 'Error');
                     }
                 },
 
@@ -663,11 +800,11 @@
                 async load() {
                     try {
                         const r = await apiFetch('/products', 'GET');
-                        if (r.ok) this.products = r.data;
+                        if (r.ok) this.products = Array.isArray(r.data) ? r.data : [];
                         const c = await apiFetch('/categories', 'GET');
-                        if (c.ok) this.categories = c.data;
+                        if (c.ok) this.categories = Array.isArray(c.data) ? c.data : [];
 
-                        // Verificar parÃ¡metro de filtro en la URL
+                        // Verificar parámetro de filtro en la URL
                         const urlParams = new URLSearchParams(window.location.search);
                         const filter = urlParams.get('filter');
                         if (filter) {
@@ -688,11 +825,11 @@
                     }
                 },
                 logout() {
-                    // Llamar a la funciÃ³n mejorada de logout que invalida la sesiÃ³n en el servidor
+                    // Llamar a la función mejorada de logout que invalida la sesión en el servidor
                     window.logout();
                 },
                 openNew() {
-                    this.form = { min_quantity: 5, tipo: 'PrÃ©stamo' };
+                    this.form = { min_quantity: 5, tipo: 'Préstamo' };
                     this.modal = true;
                 },
                 edit(p) {
@@ -703,7 +840,7 @@
                 },
                 async save() {
                     if (!this.form.name || !this.form.description || !this.form.category_id) {
-                        this.showNotification('Por favor completa todos los campos requeridos', 'warning', 'ValidaciÃ³n');
+                        this.showNotification('Por favor completa todos los campos requeridos', 'warning', 'Validación');
                         return;
                     }
                     try {
@@ -721,7 +858,7 @@
                             r = await apiFetch('/products', 'POST', dataToSave);
                         if (r.ok) {
                             const msg = this.form.id ? 'Producto actualizado' : 'Producto creado exitosamente';
-                            this.showNotification(msg, 'success', 'âœ“ Ã‰xito');
+                            this.showNotification(msg, 'success', '✓ Éxito');
                             this.modal = false;
                             this.load();
                         } else {
@@ -734,14 +871,14 @@
                 },
                 async remove(id) {
                     this.confirmDialog = {
-                        title: 'Â¿Eliminar producto?',
-                        message: 'Â¿EstÃ¡s seguro de que deseas eliminar este producto?',
-                        confirmText: 'SÃ­, eliminar',
+                        title: '¿Eliminar producto?',
+                        message: '¿Estás seguro de que deseas eliminar este producto?',
+                        confirmText: 'Sí, eliminar',
                         confirm: async () => {
                             try {
                                 const r = await apiFetch('/products/' + id, 'DELETE');
                                 if (r.ok) {
-                                    this.showNotification('Producto eliminado correctamente', 'success', 'âœ“ Ã‰xito');
+                                    this.showNotification('Producto eliminado correctamente', 'success', '✓ Éxito');
                                     this.showConfirmDialog = false;
                                     this.load();
                                 } else {
@@ -770,13 +907,13 @@
                         // Encabezado
                         doc.setFontSize(12);
                         doc.setFont(undefined, 'bold');
-                        doc.text('UNIVERSIDAD AUTÃ“NOMA DE CAMPECHE', 105, 15, { align: 'center' });
-                        doc.text('FACULTAD DE INGENIERÃA', 105, 22, { align: 'center' });
+                        doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
+                        doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
 
                         doc.setFontSize(14);
                         doc.text('REPORTE DE PRODUCTOS', 105, 32, { align: 'center' });
 
-                        // InformaciÃ³n
+                        // Información
                         doc.setFontSize(9);
                         doc.setFont(undefined, 'normal');
                         doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
@@ -789,9 +926,9 @@
                             filterText = 'Filtro: Productos Sin Stock';
                         } else if (this.filterCategory) {
                             const cat = this.categories.find(c => c.id == this.filterCategory);
-                            if (cat) filterText = 'Filtro: CategorÃ­a ' + cat.name;
+                            if (cat) filterText = 'Filtro: Categoría ' + cat.name;
                         }
-                        if (this.searchText) filterText += ' - BÃºsqueda: ' + this.searchText;
+                        if (this.searchText) filterText += ' - Búsqueda: ' + this.searchText;
                         doc.text(filterText, 15, 50);
 
                         // Tabla
@@ -799,11 +936,11 @@
                         doc.setFontSize(8);
                         doc.setFont(undefined, 'bold');
                         doc.text('#', 15, y);
-                        doc.text('CÃ³digo', 25, y);
+                        doc.text('Código', 25, y);
                         doc.text('Nombre', 50, y);
-                        doc.text('CategorÃ­a', 110, y);
+                        doc.text('Categoría', 110, y);
                         doc.text('Stock', 150, y);
-                        doc.text('MÃ­n.', 170, y);
+                        doc.text('Mín.', 170, y);
                         doc.line(15, y + 2, 195, y + 2);
 
                         y += 7;
@@ -812,11 +949,11 @@
                         this.filteredProducts.forEach((p, index) => {
                             if (y > 270) {
                                 doc.setFontSize(8);
-                                doc.text('PÃ¡gina ' + Math.ceil((index) / 25), 105, 287, { align: 'center' });
+                                doc.text('Página ' + Math.ceil((index) / 25), 105, 287, { align: 'center' });
 
                                 doc.addPage();
 
-                                // Repetir encabezado en nueva pÃ¡gina
+                                // Repetir encabezado en nueva página
                                 try {
                                     doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
                                     doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
@@ -824,8 +961,8 @@
 
                                 doc.setFontSize(12);
                                 doc.setFont(undefined, 'bold');
-                                doc.text('UNIVERSIDAD AUTÃ“NOMA DE CAMPECHE', 105, 15, { align: 'center' });
-                                doc.text('FACULTAD DE INGENIERÃA', 105, 22, { align: 'center' });
+                                doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
+                                doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
 
                                 doc.setFontSize(14);
                                 doc.text('REPORTE DE PRODUCTOS', 105, 32, { align: 'center' });
@@ -834,11 +971,11 @@
                                 doc.setFontSize(8);
                                 doc.setFont(undefined, 'bold');
                                 doc.text('#', 15, y);
-                                doc.text('CÃ³digo', 25, y);
+                                doc.text('Código', 25, y);
                                 doc.text('Nombre', 50, y);
-                                doc.text('CategorÃ­a', 110, y);
+                                doc.text('Categoría', 110, y);
                                 doc.text('Stock', 150, y);
-                                doc.text('MÃ­n.', 170, y);
+                                doc.text('Mí­n.', 170, y);
                                 doc.line(15, y + 2, 195, y + 2);
                                 y += 7;
                                 doc.setFont(undefined, 'normal');
@@ -853,11 +990,11 @@
                         });
 
                         doc.setFontSize(8);
-                        doc.text('PÃ¡gina 1', 105, 287, { align: 'center' });
+                        doc.text('Página 1', 105, 287, { align: 'center' });
 
                         const filename = 'Productos_' + new Date().toISOString().split('T')[0] + '.pdf';
                         doc.save(filename);
-                        this.showNotification('PDF exportado correctamente: ' + filename, 'success', 'âœ“ Ã‰xito');
+                        this.showNotification('PDF exportado correctamente: ' + filename, 'success', 'Éxito');
                     } catch (e) {
                         this.showNotification('Error al exportar PDF: ' + e.message, 'danger', 'Error');
                         console.error('Error exportPDF:', e);
@@ -886,7 +1023,7 @@
 
 
 
-    
+
 
 
 

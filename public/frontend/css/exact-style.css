@@ -67,7 +67,6 @@ body{
 /* Filas como flexbox */
 .row{
   display:flex;
-  gap:18px; /* Espacio entre las columnas */
 }
 
 /* Columna izquierda (sidebar) */
