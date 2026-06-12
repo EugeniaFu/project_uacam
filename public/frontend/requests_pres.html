@@ -18,13 +18,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
   <link href="css/exact-style.css" rel="stylesheet">
+  <link href="css/requests_pres.css" rel="stylesheet">
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 <body x-data="requestPresPage()" x-init="validateSessionWithServer(); load()">
   <!-- Sistema de Notificaciones/Toasts -->
-  <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+  <div class="toast-container">
     <template x-for="(toast, idx) in notifications" :key="idx">
-      <div class="alert" :class="'alert-' + toast.type" style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
+      <div class="alert toast-alert" :class="'alert-' + toast.type" role="alert">
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <strong x-show="toast.title" x-text="toast.title"></strong>
@@ -117,10 +118,10 @@
                 </div>
               </div>
               
-              <table class="table table-soft">
+              <table class="table table-products">
                 <thead>
                   <tr>
-                    <th style="width: 50px;">Seleccionar</th>
+                    <th class="th-select">Seleccionar</th>
                     <th>Código</th>
                     <th>Producto</th>
                     <th>Categoría</th>
@@ -139,7 +140,7 @@
                       <td x-text="p.category?.name || 'Sin categoría'"></td>
                       <td x-text="p.quantity"></td>
                       <td>
-                        <input type="number" class="form-control" min="1" :max="p.quantity" x-model.number="p.selectedQuantity" @input="syncQuantity(p)" :disabled="!p.selected" style="width: 100px;">
+                        <input type="number" class="form-control input-qty-100" min="1" :max="p.quantity" x-model.number="p.selectedQuantity" @input="syncQuantity(p)" :disabled="!p.selected">
                       </td>
                     </tr>
                   </template>
@@ -159,7 +160,7 @@
 
   <!-- Modal de Productos Seleccionados -->
   <template x-if="showSelectedModal">
-    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+    <div class="modal animate__animated animate__fadeIn modal-overlay" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered animate__animated animate__zoomIn">
         <div class="modal-content">
           <div class="modal-header bg-warning">
@@ -173,7 +174,7 @@
                   <th>Código</th>
                   <th>Producto</th>
                   <th>Cantidad</th>
-                  <th style="width: 80px;">Acción</th>
+                  <th class="th-accion-80">Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,7 +183,7 @@
                     <td x-text="item.codigo"></td>
                     <td x-text="item.name"></td>
                     <td>
-                      <input type="number" class="form-control" min="1" :max="getMaxQuantity(item.product_id)" x-model.number="item.quantity" @change="updateProductQuantity(item.product_id, item.quantity)" style="width: 80px;">
+                      <input type="number" class="form-control input-qty-80" min="1" :max="getMaxQuantity(item.product_id)" x-model.number="item.quantity" @change="updateProductQuantity(item.product_id, item.quantity)">
                     </td>
                     <td>
                       <button type="button" class="btn btn-sm btn-danger" @click="removeProduct(index)">Quitar</button>
@@ -202,7 +203,7 @@
 
   <!-- Modal de Confirmación -->
   <template x-if="showConfirmModal">
-    <div class="modal animate__animated animate__fadeIn" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
+    <div class="modal animate__animated animate__fadeIn modal-overlay" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered animate__animated animate__zoomIn">
         <div class="modal-content">
           <div class="modal-header">
