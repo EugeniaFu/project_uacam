@@ -526,7 +526,7 @@
                                     <h6 class="mb-0"><i class="bi bi-list-check"></i> Productos a dar de baja</h6>
                                 </div>
                                 <div class="card-body">
-                                    <template x-if="itemsAlta.length === 0">
+                                    <template x-if="itemsBaja.length === 0">
                                         <div class="d-flex flex-column align-items-center justify-content-center h-100">
                                             <i class="bi bi-box-seam fs-1 text-muted"></i>
                                             <p class="text-muted mt-2 mb-0">
@@ -690,18 +690,6 @@
                         this.itemsAlta = [];
                         this.altaObservaciones = '';
                         await this.load();
-
-                        // Alerta con botón para abrir PDF
-                        this.confirmDialog = {
-                            title: 'PDF del historial',
-                            message: '¿Deseas abrir el PDF del historial de movimientos de inventario?',
-                            confirmText: 'Abrir PDF',
-                            confirm: async () => {
-                                this.showConfirmDialog = false;
-                                await this.abrirPdfInventario();
-                            }
-                        };
-                        this.showConfirmDialog = true;
                     } catch (e) {
                         this.showNotification('Error en alta: ' + e.message, 'danger', 'Error');
                     }
@@ -729,47 +717,8 @@
                         this.bajaMotivo = '';
                         this.bajaObservaciones = '';
                         await this.load();
-
-                        // Alerta con botón para abrir PDF
-                        this.confirmDialog = {
-                            title: 'PDF del historial',
-                            message: '¿Deseas abrir el PDF del historial de movimientos de inventario?',
-                            confirmText: 'Abrir PDF',
-                            confirm: async () => {
-                                this.showConfirmDialog = false;
-                                await this.abrirPdfInventario();
-                            }
-                        };
-                        this.showConfirmDialog = true;
                     } catch (e) {
                         this.showNotification('Error en baja: ' + e.message, 'danger', 'Error');
-                    }
-                },
-
-                async abrirPdfInventario() {
-                    try {
-                        const token = localStorage.getItem('token') || '';
-                        const res = await fetch('/api/reports/movements?only_inventory=1', {
-                            method: 'GET',
-                            headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-                            credentials: 'include'
-                        });
-
-                        if (!res.ok) {
-                            const text = await res.text().catch(() => '');
-                            throw new Error('No se pudo generar el PDF (' + res.status + '). ' + (text || ''));
-                        }
-
-                        const blob = await res.blob();
-                        const url = URL.createObjectURL(blob);
-
-                        // Abrir en nueva pestaña
-                        window.open(url, '_blank');
-
-                        // Liberar URL después de un rato (para no romper el PDF al abrir)
-                        setTimeout(() => URL.revokeObjectURL(url), 60000);
-                    } catch (e) {
-                        this.showNotification('Error al abrir PDF: ' + e.message, 'danger', 'Error');
                     }
                 },
 

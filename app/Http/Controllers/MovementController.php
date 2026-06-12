@@ -18,7 +18,7 @@ class MovementController extends Controller {
 
         $where = '';
         if ($onlyInventory) {
-            $where = "WHERE m.action IN ('inventory_alta','inventory_baja')";
+            $where = "WHERE m.action IN ('inventory_alta','inventory_baja','create_product','update_product','delete_product','edit_product')";
         }
         
         $rows = DB::select(

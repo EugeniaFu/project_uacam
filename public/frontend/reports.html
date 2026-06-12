@@ -352,6 +352,8 @@
             'create_product': 'Agregó producto',
             'edit_product': 'Actualizó producto',
             'update_product': 'Actualizó producto',
+            'inventory_alta': 'Alta de Inventario',
+            'inventory_baja': 'Baja de Inventario',
             'delete_product': 'Eliminó producto',
             'create_user': 'Registró usuario',
             'edit_user': 'Modificó usuario',
@@ -428,7 +430,7 @@
         },
 
         async load() {
-          const r = await apiFetch('/movements?page=' + this.page, 'GET'); if (r.ok) this.movements = r.data.data || [];
+          const r = await apiFetch('/movements?page=' + this.page + '&only_inventory=1', 'GET'); if (r.ok) this.movements = r.data.data || [];
           const s = await apiFetch('/requests/history', 'GET'); if (s.ok) this.reqs = s.data || [];
           const p = await apiFetch('/products', 'GET'); if (p.ok) this.allProducts = p.data || [];
           const u = await apiFetch('/users', 'GET'); if (u.ok) this.allUsers = u.data || [];
@@ -690,7 +692,7 @@
           addHeader();
 
           // Tabla
-          let y = 50;
+          let y = 55;
           doc.setFontSize(8);
           doc.setFont(undefined, 'bold');
           doc.text('#', 15, y);
@@ -704,7 +706,12 @@
           doc.setFont(undefined, 'normal');
 
           this.filteredMovements().forEach((m, index) => {
-            if (y > 270) {
+            const detailsText = (m.details || '').toString();
+            const detailsLines = doc.splitTextToSize(detailsText, 55);
+            const lineHeight = 4;
+            const rowHeight = Math.max(1, detailsLines.length) * lineHeight;
+
+            if (y + rowHeight > 270) {
               // Agregar número de página antes de cambiar
               doc.setFontSize(8);
               doc.text('P\u00e1gina ' + currentPage, 105, 287, { align: 'center' });
@@ -726,12 +733,13 @@
               y += 7;
               doc.setFont(undefined, 'normal');
             }
+
             doc.text((index + 1).toString(), 15, y);
             doc.text((m.user || '').substring(0, 20), 25, y);
             doc.text(this.translateAction(m.action).substring(0, 20), 70, y);
-            doc.text((m.details || '').substring(0, 30), 110, y);
+            doc.text(detailsLines, 110, y);
             doc.text((m.created_at || '').substring(0, 16), 170, y);
-            y += 6;
+            y += rowHeight + 2;
           });
 
           // Agregar número de página en la última página
