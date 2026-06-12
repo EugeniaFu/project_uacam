@@ -223,6 +223,7 @@ if (!localStorage.getItem('token')) {
     </div>
   </template>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/secure-session.js"></script>
 <script>
@@ -317,6 +318,10 @@ function dashboard(){ return {
           if(r.ok) {
             this.showNotification('Solicitud marcada como devuelta', 'success', '✓ Éxito');
             this.showConfirmDialog = false;
+            try {
+              const details = await apiFetch('/requests/' + id, 'GET');
+              if(details.ok) this.generateNotaDevolucionPDF(details.data);
+            } catch(e) {}
             this.init();
           } else {
             this.showNotification(r.data?.message || 'Error al actualizar', 'danger', 'Error');
@@ -357,6 +362,7 @@ function dashboard(){ return {
           if(r.ok) {
             this.showNotification('Solicitud marcada como devuelta', 'success', '✓ Éxito');
             this.showConfirmDialog = false;
+            this.generateNotaDevolucionPDF(this.requestDetails);
             this.closeModal();
             this.init();
           } else {
@@ -368,6 +374,104 @@ function dashboard(){ return {
       }
     };
     this.showConfirmDialog = true;
+  },
+  generateNotaDevolucionPDF(requestData){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const items = (requestData.items || []).map(it => ({
+      name: it.product_name || it.name,
+      quantity: it.quantity
+    }));
+    const itemsPerHalfPage = 6;
+    const totalItems = items.length;
+
+    // Función para dibujar una nota
+    const drawNota = (yOffset, items, isFullPage = false) => {
+      const startY = yOffset;
+
+      // Logos (si están disponibles)
+      try {
+        doc.addImage('assets/logo1.png', 'PNG', 15, startY + 3, 25, 25);
+        doc.addImage('assets/logo2.png', 'PNG', 170, startY + 3, 25, 25);
+      } catch(e) {
+        console.log('No se pudieron cargar los logos');
+      }
+
+      // Título
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.text('DEVOLUCIÓN DE PRÉSTAMO', 105, startY + 26, { align: 'center' });
+
+      // Información básica
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text('Folio: ' + (requestData.folio || 'N/A'), 20, startY + 38);
+      doc.text('Fecha de devolución: ' + new Date().toLocaleDateString('es-MX'), 120, startY + 38);
+
+      doc.text('Solicitante: ' + requestData.solicitante, 20, startY + 54);
+      doc.text('Recibe: ' + this.userName, 120, startY + 54);
+
+      // Tabla de productos
+      doc.setFont(undefined, 'bold');
+      doc.text('Productos devueltos:', 20, startY + 72);
+      doc.setFont(undefined, 'normal');
+
+      let tableY = startY + 80;
+      doc.setFontSize(8);
+
+      // Encabezados de tabla
+      doc.setFont(undefined, 'bold');
+      doc.text('Producto', 25, tableY);
+      doc.text('Cantidad', 150, tableY);
+      doc.line(20, tableY + 2, 190, tableY + 2);
+      doc.setFont(undefined, 'normal');
+
+      tableY += 7;
+
+      // Items
+      items.forEach((item) => {
+        doc.text(item.name, 25, tableY);
+        doc.text(item.quantity.toString(), 150, tableY);
+        tableY += 5;
+      });
+
+      // Firmas
+      let signY;
+      if (isFullPage) {
+        signY = 260;
+      } else {
+        signY = startY + 130;
+      }
+
+      doc.line(30, signY, 90, signY);
+      doc.line(120, signY, 180, signY);
+      doc.setFontSize(9);
+      doc.text('Firma de Devolución', 40, signY + 5);
+      doc.text('Firma de Recibido', 132, signY + 5);
+
+      // Línea divisoria si es la primera copia en media página
+      if (yOffset === 0 && !isFullPage) {
+        doc.setLineDash([3, 3]);
+        doc.line(10, 148.5, 200, 148.5);
+        doc.setLineDash([]);
+      }
+    };
+
+    // Si hay más de 6 productos, crear página completa para cada copia
+    if (totalItems > itemsPerHalfPage) {
+      drawNota(0, items, true);
+      doc.addPage();
+      drawNota(0, items, true);
+    } else {
+      drawNota(0, items, false);      // Primera copia en la mitad superior
+      drawNota(148.5, items, false);  // Segunda copia en la mitad inferior
+    }
+
+    // Nombre del PDF según el tipo de movimiento
+    doc.setProperties({ title: 'DEVOLUCION_' + (requestData.folio || ('FOL-' + Date.now())) + '.pdf' });
+
+    // Abrir el PDF en una nueva pestaña
+    window.open(doc.output('bloburl'), '_blank');
   },
   translateType(type){
     const types = {

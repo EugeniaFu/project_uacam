@@ -109,6 +109,15 @@
           </div>
 
           <div x-show="tab=='requests'">
+            <!-- Sub-pestañas: Solicitudes / Devoluciones -->
+            <div class="mb-3">
+              <button class="btn me-2" :class="reqSubTab==='solicitudes' ? 'btn-primary' : 'btn-outline-primary'"
+                @click="reqSubTab='solicitudes'">Solicitudes</button>
+              <button class="btn" :class="reqSubTab==='devoluciones' ? 'btn-primary' : 'btn-outline-primary'"
+                @click="reqSubTab='devoluciones'">Devoluciones</button>
+            </div>
+
+            <div x-show="reqSubTab==='solicitudes'">
             <div class="d-flex justify-content-between">
               <h5>Solicitudes</h5>
               <div><button class="btn btn-outline-primary" @click="exportRequests()">Exportar PDF</button></div>
@@ -184,6 +193,51 @@
             <div class="d-flex justify-content-between"><button class="btn" @click="prevRequests()">Anterior</button>
               <div>Página <span x-text="requestsPage"></span></div><button class="btn"
                 @click="nextRequests()">Siguiente</button>
+            </div>
+            </div>
+
+            <div x-show="reqSubTab==='devoluciones'">
+              <div class="d-flex justify-content-between">
+                <h5>Devoluciones</h5>
+                <div><button class="btn btn-outline-primary" @click="exportDevoluciones()">Exportar PDF</button></div>
+              </div>
+              <table class="table table-soft">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Folio</th>
+                    <th>Solicitante</th>
+                    <th>Usuario</th>
+                    <th>Fecha Devolución Programada</th>
+                    <th>Fecha de Recepción</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(r, index) in paginatedDevoluciones()" :key="r.id">
+                    <tr>
+                      <td x-text="index + 1"></td>
+                      <td x-text="r.folio"></td>
+                      <td x-text="r.solicitante"></td>
+                      <td x-text="r.user"></td>
+                      <td x-text="r.return_date"></td>
+                      <td x-text="r.updated_at"></td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary" @click="verNotaDevolucion(r)">Ver Nota de
+                          Devolución</button>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr x-show="devolucionesList().length === 0">
+                    <td colspan="7" class="text-center text-muted">No hay devoluciones registradas</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="d-flex justify-content-between">
+                <button class="btn" @click="prevDevoluciones()">Anterior</button>
+                <div>Página <span x-text="devolucionesPage"></span></div>
+                <button class="btn" @click="nextDevoluciones()">Siguiente</button>
+              </div>
             </div>
           </div>
 
@@ -327,6 +381,8 @@
         userName: (localStorage.getItem('userName') || ''),
         tab: 'movements', page: 1, movements: [], reqs: [],
         requestsPage: 1,
+        reqSubTab: 'solicitudes',
+        devolucionesPage: 1,
         showRequestModal: false, selectedRequest: null,
         isEditing: false,
         today: new Date().toISOString().split('T')[0],
@@ -454,6 +510,16 @@
         next() { this.page++; this.load(); },
         prevRequests() { if (this.requestsPage > 1) { this.requestsPage--; } },
         nextRequests() { if (this.requestsPage * 30 < this.filteredRequests().length) { this.requestsPage++; } },
+        devolucionesList() {
+          return this.reqs.filter(r => r.type === 'prestamo' && r.status === 'devuelta');
+        },
+        paginatedDevoluciones() {
+          const start = (this.devolucionesPage - 1) * 30;
+          const end = start + 30;
+          return this.devolucionesList().slice(start, end);
+        },
+        prevDevoluciones() { if (this.devolucionesPage > 1) { this.devolucionesPage--; } },
+        nextDevoluciones() { if (this.devolucionesPage * 30 < this.devolucionesList().length) { this.devolucionesPage++; } },
         async viewRequest(req) {
           // Cargar los detalles completos de la solicitud incluyendo items
           const res = await apiFetch('/requests/' + req.id, 'GET');
@@ -649,11 +715,123 @@
             drawVale(148.5, requestData.items, false);  // Segunda copia en la mitad inferior
           }
 
+          // Nombre del PDF según el tipo de movimiento
+          const docType = (requestData.type === 'prestamo' ? 'PRESTAMO' : 'SALIDA');
+          doc.setProperties({ title: docType + '_' + (requestData.folio || ('FOL-' + Date.now())) + '.pdf' });
+
           // Guardar el PDF
           window.open(doc.output('bloburl'), '_blank');
         },
 
+        async verNotaDevolucion(req) {
+          // Obtener los datos completos de la solicitud desde la API
+          const res = await apiFetch('/requests/' + req.id, 'GET');
+          if (!res.ok) {
+            alert('Error al obtener los datos de la solicitud');
+            return;
+          }
 
+          this.generateNotaDevolucionPDF(res.data);
+        },
+
+        generateNotaDevolucionPDF(requestData) {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          const items = (requestData.items || []).map(it => ({
+            name: it.product_name || it.name,
+            quantity: it.quantity
+          }));
+          const itemsPerHalfPage = 6;
+          const totalItems = items.length;
+
+          // Función para dibujar una nota
+          const drawNota = (yOffset, items, isFullPage = false) => {
+            const startY = yOffset;
+
+            // Logos (si están disponibles)
+            try {
+              doc.addImage('assets/logo1.png', 'PNG', 15, startY + 3, 25, 25);
+              doc.addImage('assets/logo2.png', 'PNG', 170, startY + 3, 25, 25);
+            } catch (e) {
+              console.log('No se pudieron cargar los logos');
+            }
+
+            // Título
+            doc.setFontSize(13);
+            doc.setFont(undefined, 'bold');
+            doc.text('NOTA DE DEVOLUCIÓN DE PRÉSTAMO', 105, startY + 26, { align: 'center' });
+
+            // Información básica
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.text('Folio: ' + (requestData.folio || 'N/A'), 20, startY + 38);
+            doc.text('Fecha de devolución: ' + (requestData.updated_at || new Date().toLocaleDateString('es-MX')), 120, startY + 38);
+
+            doc.text('Solicitante: ' + requestData.solicitante, 20, startY + 54);
+            doc.text('Recibe: ' + (requestData.user || this.userName), 120, startY + 54);
+
+            // Tabla de productos
+            doc.setFont(undefined, 'bold');
+            doc.text('Productos devueltos:', 20, startY + 72);
+            doc.setFont(undefined, 'normal');
+
+            let tableY = startY + 80;
+            doc.setFontSize(8);
+
+            // Encabezados de tabla
+            doc.setFont(undefined, 'bold');
+            doc.text('Producto', 25, tableY);
+            doc.text('Cantidad', 150, tableY);
+            doc.line(20, tableY + 2, 190, tableY + 2);
+            doc.setFont(undefined, 'normal');
+
+            tableY += 7;
+
+            // Items
+            items.forEach((item) => {
+              doc.text(item.name, 25, tableY);
+              doc.text(item.quantity.toString(), 150, tableY);
+              tableY += 5;
+            });
+
+            // Firmas
+            let signY;
+            if (isFullPage) {
+              signY = 260;
+            } else {
+              signY = startY + 130;
+            }
+
+            doc.line(30, signY, 90, signY);
+            doc.line(120, signY, 180, signY);
+            doc.setFontSize(9);
+            doc.text('Firma de quien devuelve', 40, signY + 5);
+            doc.text('Firma de quien recibe', 132, signY + 5);
+
+            // Línea divisoria si es la primera copia en media página
+            if (yOffset === 0 && !isFullPage) {
+              doc.setLineDash([3, 3]);
+              doc.line(10, 148.5, 200, 148.5);
+              doc.setLineDash([]);
+            }
+          };
+
+          // Si hay más de 6 productos, crear página completa para cada copia
+          if (totalItems > itemsPerHalfPage) {
+            drawNota(0, items, true);
+            doc.addPage();
+            drawNota(0, items, true);
+          } else {
+            drawNota(0, items, false);      // Primera copia en la mitad superior
+            drawNota(148.5, items, false);  // Segunda copia en la mitad inferior
+          }
+
+          // Nombre del PDF según el tipo de movimiento
+          doc.setProperties({ title: 'DEVOLUCION_' + (requestData.folio || ('FOL-' + Date.now())) + '.pdf' });
+
+          // Abrir el PDF en nueva pestaña
+          window.open(doc.output('bloburl'), '_blank');
+        },
 
         exportMovements() {
           const { jsPDF } = window.jspdf;
@@ -746,6 +924,9 @@
           doc.setFontSize(8);
           doc.text('P\u00e1gina ' + currentPage, 105, 287, { align: 'center' });
 
+          // Nombre del PDF según el tipo de movimiento
+          doc.setProperties({ title: 'REPORTE_MOVIMIENTOS_FOL-' + Date.now() + '.pdf' });
+
           // Abrir el PDF en nueva pestaña
           window.open(doc.output('bloburl'), '_blank');
         },
@@ -835,6 +1016,102 @@
           // Agregar número de página en la última página
           doc.setFontSize(8);
           doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
+
+          // Nombre del PDF según el tipo de movimiento
+          doc.setProperties({ title: 'REPORTE_SOLICITUDES_FOL-' + Date.now() + '.pdf' });
+
+          // Abrir el PDF en nueva pestaña
+          window.open(doc.output('bloburl'), '_blank');
+        },
+        exportDevoluciones() {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          let currentPage = 1;
+
+          const addHeader = () => {
+            // Logos
+            try {
+              doc.addImage('assets/logo1.png', 'PNG', 15, 8, 25, 25);
+              doc.addImage('assets/logo2.png', 'PNG', 165, 8, 25, 25);
+            } catch (e) {
+              console.log('No se pudieron cargar los logos');
+            }
+
+            // Encabezado
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('UNIVERSIDAD AUTÓNOMA DE CAMPECHE', 105, 15, { align: 'center' });
+            doc.text('FACULTAD DE INGENIERÍA', 105, 22, { align: 'center' });
+
+            doc.setFontSize(14);
+            doc.text('REPORTE DE DEVOLUCIONES', 105, 32, { align: 'center' });
+
+            // Información
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.text('Fecha: ' + new Date().toLocaleDateString('es-MX'), 15, 42);
+            doc.text('Página de datos: ' + this.devolucionesPage, 165, 42);
+          };
+
+          addHeader();
+
+          // Tabla
+          let y = 50;
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'bold');
+          doc.text('#', 15, y);
+          doc.text('Folio', 25, y);
+          doc.text('Solicitante', 65, y);
+          doc.text('Usuario', 110, y);
+          doc.text('Fecha Devolución', 145, y);
+          doc.text('Fecha Recepción', 175, y);
+          doc.line(15, y + 2, 195, y + 2);
+
+          y += 7;
+          doc.setFont(undefined, 'normal');
+
+          // Usar solo los registros paginados (30 por página)
+          this.paginatedDevoluciones().forEach((r, index) => {
+            if (y > 270) {
+              // Agregar número de página antes de cambiar
+              doc.setFontSize(8);
+              doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
+
+              doc.addPage();
+              currentPage++;
+              addHeader();
+              y = 50;
+
+              // Repetir encabezados de tabla
+              doc.setFontSize(8);
+              doc.setFont(undefined, 'bold');
+              doc.text('#', 15, y);
+              doc.text('Folio', 25, y);
+              doc.text('Solicitante', 65, y);
+              doc.text('Usuario', 110, y);
+              doc.text('Fecha Devolución', 145, y);
+              doc.text('Fecha Recepción', 175, y);
+              doc.line(15, y + 2, 195, y + 2);
+              y += 7;
+              doc.setFont(undefined, 'normal');
+            }
+            // La numeración se reinicia en cada página (index + 1)
+            doc.text((index + 1).toString(), 15, y);
+            doc.text((r.folio || '').substring(0, 15), 25, y);
+            doc.text((r.solicitante || '').substring(0, 20), 65, y);
+            doc.text((r.user || '').substring(0, 15), 110, y);
+            doc.text((r.return_date || '').substring(0, 16), 145, y);
+            doc.text((r.updated_at || '').substring(0, 16), 175, y);
+            y += 6;
+          });
+
+          // Agregar número de página en la última página
+          doc.setFontSize(8);
+          doc.text('Página ' + currentPage, 105, 287, { align: 'center' });
+
+          // Nombre del PDF según el tipo de movimiento
+          doc.setProperties({ title: 'REPORTE_DEVOLUCIONES_FOL-' + Date.now() + '.pdf' });
 
           // Abrir el PDF en nueva pestaña
           window.open(doc.output('bloburl'), '_blank');

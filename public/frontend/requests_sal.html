@@ -549,9 +549,12 @@
           drawVale(148.5, this.form.items, false);  // Segunda copia en la mitad inferior
         }
         
-        // Guardar el PDF
-        const fileName = 'vale_' + (requestData.folio || 'solicitud') + '.pdf';
-        doc.save(fileName);
+        // Nombre del PDF según el tipo de movimiento
+        const docType = (this.form.type === 'prestamo' ? 'PRESTAMO' : 'SALIDA');
+        doc.setProperties({ title: docType + '_' + (requestData.folio || ('FOL-' + Date.now())) + '.pdf' });
+
+        // Abrir el PDF en una nueva pestaña
+        window.open(doc.output('bloburl'), '_blank');
       },
       
       logout(){

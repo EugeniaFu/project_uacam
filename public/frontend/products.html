@@ -203,28 +203,12 @@
                                 <input type="number" class="form-control" x-model.number="form.quantity" min="0"
                                     required>
                             </template>
-                            <div x-show="form.id">
-                                <div class="d-flex gap-2 align-items-center">
-                                    <input id="mainQuantity" type="number" class="form-control"
-                                        x-model.number="form.quantity" min="0" required>
-                                    <div class="form-check form-switch" style="margin-bottom: 0; white-space: nowrap;">
-                                        <input class="form-check-input" type="checkbox" x-model="form.addQuantity"
-                                            id="addQuantityCheck">
-                                        <label class="form-check-label" for="addQuantityCheck"
-                                            style="margin-bottom: 0;">
-                                            Agregar
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- Ejemplo/resultado justo debajo del campo Cantidad -->
-                                <div class="mt-1" style="min-height:1.5rem;">
-                                    <small class="form-text text-success" x-show="form.addQuantity"
-                                        x-html="'Nuevo total: ' + (originalQuantity || 0) + ' + ' + (form.quantity || 0) + ' = <strong>' + ((originalQuantity || 0) + (form.quantity || 0)) + '</strong>'"></small>
-                                </div>
-
-
-                            </div>
+                            <template x-if="form.id">
+                                <input type="number" class="form-control" x-model.number="form.quantity" min="0"
+                                    disabled>
+                            </template>
+                            <small class="form-text text-muted" x-show="form.id">La cantidad se modifica desde las
+                                opciones de Alta y Baja de inventario.</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Cantidad mínima</label>
@@ -784,7 +768,6 @@
                 edit(p) {
                     this.form = Object.assign({}, p);
                     this.originalQuantity = p.quantity;
-                    this.form.addQuantity = false;
                     this.modal = true;
                 },
                 async save() {
@@ -794,11 +777,6 @@
                     }
                     try {
                         let dataToSave = Object.assign({}, this.form);
-
-                        // If editing and "Agregar" checkbox is checked, sum quantities
-                        if (this.form.id && this.form.addQuantity) {
-                            dataToSave.quantity = this.originalQuantity + (this.form.quantity || 0);
-                        }
 
                         let r;
                         if (this.form.id)
@@ -941,7 +919,7 @@
                         doc.setFontSize(8);
                         doc.text('Página 1', 105, 287, { align: 'center' });
 
-                        const filename = 'Productos_' + new Date().toISOString().split('T')[0] + '.pdf';
+                        const filename = 'REPORTE_PRODUCTOS_FOL-' + Date.now() + '.pdf';
                         doc.save(filename);
                         this.showNotification('PDF exportado correctamente: ' + filename, 'success', 'Éxito');
                     } catch (e) {
