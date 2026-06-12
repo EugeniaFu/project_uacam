@@ -22,6 +22,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/exact-style.css" rel="stylesheet">
     <link href="css/modales.css" rel="stylesheet">
+    <link href="css/products.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -30,10 +31,9 @@
 <body x-data="productsPage()" x-init="validateSessionWithServer(); load()">
 
     <!-- Sistema de Notificaciones/Toasts -->
-    <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+    <div class="toast-container">
         <template x-for="(toast, idx) in notifications" :key="idx">
-            <div class="alert" :class="'alert-' + toast.type"
-                style="margin-bottom: 10px; animation: slideInRight 0.3s ease;" role="alert">
+            <div class="alert toast-alert" :class="'alert-' + toast.type" role="alert">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <strong x-show="toast.title" x-text="toast.title"></strong>
@@ -99,7 +99,7 @@
                         </div>
                     </div>
 
-                    <table class="table table-soft mt-3">
+                    <table class="table table-products mt-3">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -139,8 +139,7 @@
 
     <!-- Modal de Confirmación Personalizado -->
     <template x-if="showConfirmDialog">
-        <div class="modal animate__animated animate__fadeIn" tabindex="-1"
-            style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal animate__animated animate__fadeIn modal-overlay" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered modal-sm animate__animated animate__zoomIn">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -163,7 +162,7 @@
 
     <!-- Modal para agregar/editar producto -->
     <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modal}" tabindex="-1"
-        style="background:rgba(0,0,0,0.5);" x-show="modal">
+        x-show="modal">
         <div class="modal-dialog animate__animated animate__zoomIn">
             <div class="modal-content">
                 <div class="modal-header">
@@ -236,10 +235,10 @@
 
     <!-- Modal Alta Inventario -->
     <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modalAlta}" tabindex="-1"
-        style="background:rgba(0,0,0,0.5);" x-show="modalAlta">
+        x-show="modalAlta">
         <div class="modal-dialog modal-xl animate__animated animate__zoomIn">
             <div class="modal-content">
-                <div class="modal-header" style="background:#1e3a5f; color:#fff;">
+                <div class="modal-header header-alta">
                     <h5 class="modal-title">
                         <i class="bi bi-plus-circle"></i> Alta de Inventario
                     </h5>
@@ -253,7 +252,7 @@
 
                             <!-- Selección -->
                             <div class="card border-primary mb-3 shadow-sm">
-                                <div class="card-header text-white" style="background:#1e3a5f;">
+                                <div class="card-header text-white header-alta">
                                     <h6 class="mb-0">
                                         <i class="bi bi-plus-circle"></i>
                                         Selección y cantidad
@@ -304,7 +303,7 @@
 
                             <!-- Observaciones -->
                             <div class="card border-primary shadow-sm">
-                                <div class="card-header text-white" style="background:#1e3a5f;">
+                                <div class="card-header text-white header-alta">
                                     <h6 class="mb-0">
                                         <i class="bi bi-chat-text"></i>
                                         Observaciones
@@ -327,7 +326,7 @@
 
                             <div class="card border-primary shadow-sm h-100">
 
-                                <div class="card-header text-white" style="background:#1e3a5f;">
+                                <div class="card-header text-white header-alta">
                                     <h6 class="mb-0">
                                         <i class="bi bi-list-check"></i>
                                         Productos a dar de alta
@@ -381,8 +380,8 @@
                                                             <td class="text-center">
 
                                                                 <input type="number" min="1"
-                                                                    class="form-control form-control-sm mx-auto"
-                                                                    style="width:90px" x-model.number="it.cant">
+                                                                    class="form-control form-control-sm mx-auto input-cant-alta"
+                                                                    x-model.number="it.cant">
 
                                                             </td>
 
@@ -441,10 +440,10 @@
 
     <!-- Modal Baja Inventario -->
     <div class="modal fade animate__animated animate__fadeIn" :class="{'show d-block': modalBaja}" tabindex="-1"
-        style="background:rgba(0,0,0,0.5);" x-show="modalBaja">
+        x-show="modalBaja">
         <div class="modal-dialog modal-xl animate__animated animate__zoomIn">
             <div class="modal-content">
-                <div class="modal-header" style="background:#7f1d1d; color:#fff;">
+                <div class="modal-header header-baja">
                     <h5 class="modal-title">
                         <i class="bi bi-dash-circle"></i> Baja de Inventario
                     </h5>
@@ -458,7 +457,7 @@
                     <div class="row g-3">
                         <div class="col-xl-6">
                             <div class="card border-danger mb-3">
-                                <div class="card-header text-white" style="background:#7f1d1d;">
+                                <div class="card-header text-white header-baja">
                                     <h6 class="mb-0"><i class="bi bi-dash-circle"></i> Selección y cantidad</h6>
                                 </div>
                                 <div class="card-body">
@@ -488,7 +487,7 @@
                                 </div>
                             </div>
                             <div class="card border-danger">
-                                <div class="card-header text-white" style="background:#7f1d1d;">
+                                <div class="card-header text-white header-baja">
                                     <h6 class="mb-0"><i class="bi bi-chat-text"></i> Motivo de baja</h6>
                                 </div>
                                 <div class="card-body">
@@ -506,7 +505,7 @@
                         </div>
                         <div class="col-xl-6">
                             <div class="card border-danger h-100">
-                                <div class="card-header text-white" style="background:#7f1d1d;">
+                                <div class="card-header text-white header-baja">
                                     <h6 class="mb-0"><i class="bi bi-list-check"></i> Productos a dar de baja</h6>
                                 </div>
                                 <div class="card-body">
@@ -535,8 +534,8 @@
                                                         <td x-text="it.name"></td>
                                                         <td><span class="badge bg-secondary"
                                                                 x-text="it.quantity"></span></td>
-                                                        <td><input type="number" class="form-control form-control-sm"
-                                                                style="width:65px;" x-model.number="it.cant"
+                                                        <td><input type="number" class="form-control form-control-sm input-cant-baja"
+                                                                x-model.number="it.cant"
                                                                 :max="it.quantity" min="1"></td>
                                                         <td>
                                                             <span class="badge"
