@@ -284,6 +284,19 @@ input[type="submit"]:hover{
   box-shadow:0 0 0 0.25rem rgba(168,219,168,0.25) !important;
 }
 
+/* Badges de tipo de solicitud (mismos colores que los botones Préstamo/Salida) */
+.badge-prestamo{
+  background-color:#f4a8a8;
+  color:#5c1a1a;
+  font-weight:600;
+}
+
+.badge-salida{
+  background-color:#a8dba8;
+  color:#1a5c1a;
+  font-weight:600;
+}
+
 /* Botón de Movimientos - Rojo Pastel */
 .btn-movimientos{
   background-color:#f4a8a8 !important;
